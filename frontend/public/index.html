@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>WellnessApp</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- tu CSS -->
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <h1>WellnessApp Frontend</h1>
+
+  <div class="box">
+    <h2>Login</h2>
+    <input type="email" id="email" placeholder="Email">
+    <br>
+    <input type="password" id="password" placeholder="Password">
+    <br>
+    <button type="button" id="btnLogin">Iniciar Sesión</button>
+    <p id="loginStatus"></p>
+  </div>
+
+  <div class="box">
+    <h2>Enviar GAD-7</h2>
+    <button type="button" id="btnGad7">Enviar prueba GAD-7</button>
+  </div>
+
+  <div class="box">
+    <h2>Enviar PHQ-9</h2>
+    <button type="button" id="btnPhq9">Enviar prueba PHQ-9</button>
+  </div>
+
+  <div class="box">
+    <h2>Historial</h2>
+    <button type="button" id="btnHistory">Ver historial</button>
+    <pre id="history"></pre>
+  </div>
+
+  <!-- tu JS -->
+  <script src="js/app.js?v=1"></script>
+</body>
+</html>

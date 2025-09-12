@@ -1,0 +1,36 @@
+body {
+  font-family: Arial, sans-serif;
+  margin: 20px;
+}
+
+h1 {
+  color: #2c3e50;
+}
+
+.box {
+  border: 1px solid #ddd;
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  background: #fafafa;
+}
+
+input,
+button {
+  padding: 8px;
+  margin: 4px 0;
+}
+
+pre {
+  background: #eee;
+  padding: 10px;
+  white-space: pre-wrap;
+}
+
+.ok {
+  color: #1e9a4b;
+}
+
+.err {
+  color: #c0392b;
+}

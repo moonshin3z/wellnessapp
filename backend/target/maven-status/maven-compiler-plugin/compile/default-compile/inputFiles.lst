@@ -1,0 +1,12 @@
+C:\Users\josue\Downloads\wellnessapp\backend\src\main\java\com\uvg\wellnessapp\config\CorsConfig.java
+C:\Users\josue\Downloads\wellnessapp\backend\src\main\java\com\uvg\wellnessapp\domain\AssessmentResult.java
+C:\Users\josue\Downloads\wellnessapp\backend\src\main\java\com\uvg\wellnessapp\repository\AssessmentResultRepository.java
+C:\Users\josue\Downloads\wellnessapp\backend\src\main\java\com\uvg\wellnessapp\service\AssessmentService.java
+C:\Users\josue\Downloads\wellnessapp\backend\src\main\java\com\uvg\wellnessapp\service\Gad7Service.java
+C:\Users\josue\Downloads\wellnessapp\backend\src\main\java\com\uvg\wellnessapp\service\Phq9Service.java
+C:\Users\josue\Downloads\wellnessapp\backend\src\main\java\com\uvg\wellnessapp\web\ApiError.java
+C:\Users\josue\Downloads\wellnessapp\backend\src\main\java\com\uvg\wellnessapp\web\Gad7Controller.java
+C:\Users\josue\Downloads\wellnessapp\backend\src\main\java\com\uvg\wellnessapp\web\GlobalExceptionHandler.java
+C:\Users\josue\Downloads\wellnessapp\backend\src\main\java\com\uvg\wellnessapp\web\HealthController.java
+C:\Users\josue\Downloads\wellnessapp\backend\src\main\java\com\uvg\wellnessapp\web\Phq9Controller.java
+C:\Users\josue\Downloads\wellnessapp\backend\src\main\java\com\uvg\wellnessapp\WellnessAppApplication.java

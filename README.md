@@ -1,18 +1,18 @@
-# WellnessApp (MVP listo)
+# WellnessApp
 
 ## Requisitos
-- Java 21 (Temurin) — ya lo tienes
+- Java 21 (Temurin)
 - Docker Desktop
 - VS Code
 
-## Cómo correr (todo con Docker)
+## Cómo correr 
 ```bash
 docker compose up -d --build
 # API:    http://localhost:8082/health  -> ok
 # Web:    http://localhost:5173
 ```
 
-Si quieres correr **solo DB en Docker** y **API local**:
+ **solo DB en Docker** y **API local**:
 ```bash
 docker compose up -d db
 # en otra terminal

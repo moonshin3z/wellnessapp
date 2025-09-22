@@ -4,6 +4,7 @@
 - Java 21 (Temurin)
 - Docker Desktop
 - VS Code
+- Maven
 
 ## Cómo correr 
 ```bash

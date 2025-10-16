@@ -2,8 +2,8 @@
 
 ## Requisitos
 - Java 21 (Temurin)
-- Docker Desktop
-- VS Code
+- Docker Desktop (y Docker Compose)
+- VS Code (Extension Pack for Java)
 - Maven
 
 ## Cómo correr 

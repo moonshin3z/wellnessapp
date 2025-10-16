@@ -29,19 +29,6 @@ frontend/ -> estáticos (Nginx)
 docker-compose.yml -> DB (5432), API (8082), Web (5173)
 ```
 
-## Endpoints
-- GET `/health` -> "ok"
-- POST `/assessments/gad7` -> body: `{ "answers": [0..3]*7 }`
-```json
-{
-  "total": 6,
-  "category": "leve",
-  "message": "Prueba respiración guiada y seguimiento."
-}
-```
 
 ## Notas
 - CORS habilitado para `http://localhost:5173`.
-- Flyway corre al arrancar y crea tablas básicas.
-- Ajusta `.env` si quieres otra DB/usuario/clave.
-```

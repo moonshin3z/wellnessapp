@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <title>WellnessApp</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#2fa3b0">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -11,75 +12,148 @@
 </head>
 <body>
   <div class="gradient"></div>
+
   <div class="app">
+    <!-- LOGIN -->
     <section id="view-login" class="view view--active">
       <div class="auth-card">
-        <div class="auth-avatar">
+        <div class="auth-avatar" aria-hidden="true">
           <span class="icon">👤</span>
         </div>
-        <h1>Bienvenido de vuelta</h1>
-        <p class="auth-subtitle">Inicia sesión para continuar con tu bienestar</p>
-        <form id="loginForm" class="auth-form">
-          <label class="field">
-            <span>Correo electrónico</span>
-            <input type="email" id="loginEmail" placeholder="tú@correo.com" required>
-          </label>
-          <label class="field">
-            <span>Contraseña</span>
-            <input type="password" id="loginPassword" placeholder="••••••••" required>
-          </label>
+        <h1>Iniciar sesión</h1>
+        <p class="auth-subtitle">Toma 2 minutos para ti</p>
+
+        <form id="loginForm" class="auth-form" novalidate>
+          <div class="field">
+            <label for="loginEmail"><span>Correo electrónico</span></label>
+            <input
+              type="email"
+              id="loginEmail"
+              name="email"
+              placeholder="tu@correo.edu"
+              autocomplete="email"
+              inputmode="email"
+              required
+            >
+          </div>
+
+          <div class="field">
+            <label for="loginPassword"><span>Contraseña</span></label>
+            <input
+              type="password"
+              id="loginPassword"
+              name="password"
+              placeholder="••••••••"
+              autocomplete="current-password"
+              required
+            >
+          </div>
+
           <button type="submit" class="btn btn--primary">Iniciar sesión</button>
-          <p id="loginStatus" class="status"></p>
+          <p id="loginStatus" class="status" aria-live="polite"></p>
         </form>
-        <p class="auth-switch">¿No tienes una cuenta? <button type="button" class="link" data-switch="register">Regístrate aquí</button></p>
+
+        <p class="auth-switch">
+          ¿No tienes una cuenta?
+          <button type="button" class="link" data-switch="register">Regístrate aquí</button>
+        </p>
       </div>
     </section>
 
+    <!-- REGISTRO -->
     <section id="view-register" class="view">
       <div class="auth-card">
-        <div class="auth-avatar">
+        <div class="auth-avatar" aria-hidden="true">
           <span class="icon">🆕</span>
         </div>
         <h1>Crear cuenta</h1>
         <p class="auth-subtitle">Únete para comenzar a monitorear tu bienestar</p>
-        <form id="registerForm" class="auth-form">
-          <label class="field">
-            <span>Nombre completo</span>
-            <input type="text" id="registerName" placeholder="Tu nombre">
-          </label>
-          <label class="field">
-            <span>Correo electrónico</span>
-            <input type="email" id="registerEmail" placeholder="tú@correo.com" required>
-          </label>
-          <label class="field">
-            <span>Edad</span>
-            <input type="number" id="registerAge" placeholder="18" min="15" max="100">
-          </label>
-          <label class="field">
-            <span>Nivel educativo</span>
-            <select id="registerEducation">
+
+        <form id="registerForm" class="auth-form" novalidate>
+          <div class="field">
+            <label for="registerName"><span>Nombre completo</span></label>
+            <input
+              type="text"
+              id="registerName"
+              name="name"
+              placeholder="Tu nombre"
+              autocomplete="name"
+            >
+          </div>
+
+          <div class="field">
+            <label for="registerEmail"><span>Correo electrónico</span></label>
+            <input
+              type="email"
+              id="registerEmail"
+              name="email"
+              placeholder="tu@correo.edu"
+              autocomplete="email"
+              inputmode="email"
+              required
+            >
+          </div>
+
+          <div class="field">
+            <label for="registerAge"><span>Edad</span></label>
+            <input
+              type="number"
+              id="registerAge"
+              name="age"
+              placeholder="18"
+              min="15"
+              max="100"
+              inputmode="numeric"
+              autocomplete="bday"  >
+          </div>
+
+          <div class="field">
+            <label for="registerEducation"><span>Nivel educativo</span></label>
+            <select id="registerEducation" name="education" autocomplete="education-level">
               <option value="">Selecciona nivel</option>
               <option>Secundaria</option>
               <option>Bachillerato</option>
               <option>Universidad</option>
               <option>Postgrado</option>
             </select>
-          </label>
-          <label class="field">
-            <span>Contraseña</span>
-            <input type="password" id="registerPassword" placeholder="••••••••" required>
-          </label>
-          <label class="field">
-            <span>Confirmar contraseña</span>
-            <input type="password" id="registerConfirm" placeholder="••••••••" required>
-          </label>
+          </div>
+
+          <div class="field">
+            <label for="registerPassword"><span>Contraseña</span></label>
+            <input
+              type="password"
+              id="registerPassword"
+              name="password"
+              placeholder="••••••••"
+              autocomplete="new-password"
+              required
+            >
+          </div>
+
+          <div class="field">
+            <label for="registerConfirm"><span>Confirmar contraseña</span></label>
+            <input
+              type="password"
+              id="registerConfirm"
+              name="confirm"
+              placeholder="••••••••"
+              autocomplete="new-password"
+              required
+            >
+          </div>
+
           <button type="submit" class="btn btn--primary">Crear cuenta</button>
-          <p id="registerStatus" class="status"></p>
+          <p id="registerStatus" class="status" aria-live="polite"></p>
         </form>
-        <p class="auth-switch">¿Ya tienes una cuenta? <button type="button" class="link" data-switch="login">Inicia sesión aquí</button></p>
+
+        <p class="auth-switch">
+          ¿Ya tienes una cuenta?
+          <button type="button" class="link" data-switch="login">Inicia sesión aquí</button>
+        </p>
       </div>
     </section>
 
+    <!-- DASHBOARD -->
     <section id="view-dashboard" class="view">
       <header class="topbar">
         <div>
@@ -89,7 +163,7 @@
         <button class="btn btn--ghost" id="btnLogout">Cerrar sesión</button>
       </header>
 
-      <section class="hero-card">
+      <section class="hero-card" aria-label="Check-in de Bienestar">
         <div>
           <p class="hero-subtitle">Tu bienestar es importante</p>
           <h3>Check-in de Bienestar</h3>
@@ -100,7 +174,7 @@
         <div class="hero-illustration" aria-hidden="true">💫</div>
       </section>
 
-      <section class="quick-links">
+      <section class="quick-links" aria-label="Accesos rápidos">
         <article class="quick-card">
           <div class="quick-icon">☁️</div>
           <div>
@@ -108,6 +182,7 @@
             <p>Conecta con otros estudiantes y comparte estrategias.</p>
           </div>
         </article>
+
         <article class="quick-card quick-card--action">
           <div class="quick-icon">🩺</div>
           <div>
@@ -116,6 +191,7 @@
           </div>
           <button class="btn btn--light" id="btnStartPhq9">Iniciar PHQ-9</button>
         </article>
+
         <article class="quick-card">
           <div class="quick-icon">🧰</div>
           <div>
@@ -123,6 +199,7 @@
             <p>Tips y herramientas útiles seleccionadas por especialistas.</p>
           </div>
         </article>
+
         <article class="quick-card quick-card--action">
           <div class="quick-icon">📚</div>
           <div>
@@ -133,7 +210,7 @@
         </article>
       </section>
 
-      <section id="historyPanel" class="history hidden">
+      <section id="historyPanel" class="history hidden" aria-live="polite">
         <div class="history-header">
           <h3>Tu historial reciente</h3>
           <button class="link" id="btnCloseHistory">Ocultar</button>
@@ -142,20 +219,21 @@
       </section>
     </section>
 
+    <!-- ASSESSMENT -->
     <section id="view-assessment" class="view">
       <header class="assessment-header">
-        <button class="back" id="btnBackToDashboard" aria-label="Volver">
-          ←
-        </button>
+        <button class="back" id="btnBackToDashboard" aria-label="Volver">←</button>
         <div>
           <p class="assessment-title" id="assessmentTitle">Check-in de Bienestar</p>
           <p class="assessment-step" id="assessmentStep"></p>
         </div>
-        <div class="progress">
+        <div class="progress" aria-hidden="true">
           <div class="progress-bar" id="assessmentProgress"></div>
         </div>
       </header>
+
       <section class="question-card" id="questionCard"></section>
+
       <footer class="assessment-footer">
         <button class="btn btn--ghost" id="btnPrevQuestion">Anterior</button>
         <div class="assessment-points">+10 puntos al completar · +5 extra si terminas en menos de 2 min</div>
@@ -163,9 +241,10 @@
       </footer>
     </section>
 
+    <!-- RESULTADOS -->
     <section id="view-result" class="view">
       <div class="result-card">
-        <div class="result-icon">✨</div>
+        <div class="result-icon" aria-hidden="true">✨</div>
         <h2 id="resultTitle">¡Bien hecho!</h2>
         <p id="resultSummary" class="result-summary"></p>
         <ul id="resultDetails" class="result-details"></ul>

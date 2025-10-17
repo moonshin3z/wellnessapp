@@ -340,6 +340,10 @@ async function submitAssessment() {
       response = await apiPhq9(payload, userId);
     } else {
       response = await apiGad7(payload, userId);
+    if (type === 'phq9') {
+      response = await apiPhq9(payload);
+    } else {
+      response = await apiGad7(payload);
     }
     lastResultType = type;
     showResult(response, type);
@@ -374,6 +378,13 @@ function showResult(result, type) {
     li.textContent = text;
     elements.resultDetails.append(li);
   });
+}
+
+function goToDashboard() {
+  showView('view-dashboard');
+  updateDashboard();
+}
+
 }
 
 function goToDashboard() {
@@ -445,6 +456,39 @@ if (elements.loginForm) {
     }
   });
 }
+
+if (elements.registerForm) {
+  elements.registerForm.addEventListener('submit', async (evt) => {
+    evt.preventDefault();
+    const email = document.getElementById('registerEmail').value.trim();
+    const password = document.getElementById('registerPassword').value;
+    const confirm = document.getElementById('registerConfirm').value;
+    const name = document.getElementById('registerName').value.trim();
+
+    if (password !== confirm) {
+      setStatus(elements.registerStatus, 'Las contraseñas no coinciden.', 'error');
+      return;
+    }
+
+    setStatus(elements.registerStatus, 'Creando cuenta...');
+    try {
+      await apiRegister(email, password);
+      if (name) {
+        storeDisplayName(email, name);
+      }
+      setStatus(elements.registerStatus, 'Cuenta creada correctamente. Ahora puedes iniciar sesión.', 'success');
+      elements.registerForm.reset();
+      setTimeout(() => {
+        showView('view-login');
+        setStatus(elements.registerStatus, '', null);
+      }, 1200);
+    } catch (error) {
+      console.error(error);
+      setStatus(elements.registerStatus, 'No se pudo registrar. ¿El correo ya existe?', 'error');
+    }
+  });
+}
+
 
 if (elements.registerForm) {
   elements.registerForm.addEventListener('submit', async (evt) => {

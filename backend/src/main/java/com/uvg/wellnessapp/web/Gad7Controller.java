@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.uvg.wellnessapp.domain.AssessmentResult;
 import com.uvg.wellnessapp.service.AssessmentService;
 import com.uvg.wellnessapp.service.Gad7Service;
+import com.uvg.wellnessapp.security.AuthUtils;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -52,8 +53,9 @@ public class Gad7Controller {
   @PostMapping("/gad7")
   public ResponseEntity<Gad7Response> score(@Valid @RequestBody Gad7Request req){
     boolean shouldSave = (req.save == null) ? true : req.save;
+    Long userId = AuthUtils.resolveUserId(req.userId);
     if (shouldSave) {
-      AssessmentResult ar = assessmentService.saveGad7(req.answers, req.notes, req.userId);
+      AssessmentResult ar = assessmentService.saveGad7(req.answers, req.notes, userId);
       var r = gad7.score(req.answers);
       return ResponseEntity.ok(new Gad7Response(
           ar.getId(),
@@ -85,9 +87,11 @@ public class Gad7Controller {
 
   @GetMapping("/history")
   public ResponseEntity<List<HistoryItem>> history(@RequestParam(required = false) Long userId) {
-    List<AssessmentResult> list = (userId == null)
+    Long resolvedUserId = AuthUtils.resolveUserId(userId);
+    List<AssessmentResult> list = (resolvedUserId == null)
         ? assessmentService.listAll()
-        : assessmentService.listByUser(userId);
+        : assessmentService.listByUser(resolvedUserId);
     return ResponseEntity.ok(list.stream().map(HistoryItem::new).toList());
   }
+
 }

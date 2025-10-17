@@ -152,6 +152,30 @@ async function apiRegister(email, password) {
   return res.json();
 }
 
+async function apiGad7(answers, userId, options = {}) {
+  const payload = { answers };
+  if (userId !== undefined && userId !== null) {
+    payload.userId = userId;
+  }
+  if (options && typeof options.save === 'boolean') {
+    payload.save = options.save;
+  }
+  if (options && options.notes) {
+    payload.notes = options.notes;
+  }
+async function apiRegister(email, password) {
+  const res = await fetch(`${API}/auth/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password })
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text || `Error ${res.status}`);
+  }
+  return res.json();
+}
+
 async function apiGad7(answers) {
   const res = await fetch(`${API}/assessments/gad7`, {
     method: 'POST',
@@ -159,6 +183,7 @@ async function apiGad7(answers) {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${getToken()}`
     },
+    body: JSON.stringify(payload)
     body: JSON.stringify({ answers })
   });
   if (!res.ok) {
@@ -168,6 +193,17 @@ async function apiGad7(answers) {
   return res.json();
 }
 
+async function apiPhq9(answers, userId, options = {}) {
+  const payload = { answers };
+  if (userId !== undefined && userId !== null) {
+    payload.userId = userId;
+  }
+  if (options && typeof options.save === 'boolean') {
+    payload.save = options.save;
+  }
+  if (options && options.notes) {
+    payload.notes = options.notes;
+  }
 async function apiPhq9(answers) {
   const res = await fetch(`${API}/assessments/phq9`, {
     method: 'POST',
@@ -175,6 +211,7 @@ async function apiPhq9(answers) {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${getToken()}`
     },
+    body: JSON.stringify(payload)
     body: JSON.stringify({ answers })
   });
   if (!res.ok) {
@@ -315,6 +352,11 @@ async function submitAssessment() {
     elements.btnNextQuestion.disabled = true;
     elements.btnNextQuestion.textContent = 'Enviando...';
     let response;
+    const userId = currentUser?.userId;
+    if (type === 'phq9') {
+      response = await apiPhq9(payload, userId);
+    } else {
+      response = await apiGad7(payload, userId);
     if (type === 'phq9') {
       response = await apiPhq9(payload);
     } else {
@@ -353,6 +395,13 @@ function showResult(result, type) {
     li.textContent = text;
     elements.resultDetails.append(li);
   });
+}
+
+function goToDashboard() {
+  showView('view-dashboard');
+  updateDashboard();
+}
+
 }
 
 function goToDashboard() {
@@ -424,6 +473,39 @@ if (elements.loginForm) {
     }
   });
 }
+
+if (elements.registerForm) {
+  elements.registerForm.addEventListener('submit', async (evt) => {
+    evt.preventDefault();
+    const email = document.getElementById('registerEmail').value.trim();
+    const password = document.getElementById('registerPassword').value;
+    const confirm = document.getElementById('registerConfirm').value;
+    const name = document.getElementById('registerName').value.trim();
+
+    if (password !== confirm) {
+      setStatus(elements.registerStatus, 'Las contraseñas no coinciden.', 'error');
+      return;
+    }
+
+    setStatus(elements.registerStatus, 'Creando cuenta...');
+    try {
+      await apiRegister(email, password);
+      if (name) {
+        storeDisplayName(email, name);
+      }
+      setStatus(elements.registerStatus, 'Cuenta creada correctamente. Ahora puedes iniciar sesión.', 'success');
+      elements.registerForm.reset();
+      setTimeout(() => {
+        showView('view-login');
+        setStatus(elements.registerStatus, '', null);
+      }, 1200);
+    } catch (error) {
+      console.error(error);
+      setStatus(elements.registerStatus, 'No se pudo registrar. ¿El correo ya existe?', 'error');
+    }
+  });
+}
+
 
 if (elements.registerForm) {
   elements.registerForm.addEventListener('submit', async (evt) => {

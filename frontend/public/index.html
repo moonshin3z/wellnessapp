@@ -12,6 +12,96 @@
 </head>
 <body>
   <div class="gradient"></div>
+  <div class="app">
+    <section id="view-login" class="view view--active">
+      <div class="auth-card">
+        <div class="auth-avatar">
+          <span class="icon">👤</span>
+        </div>
+        <h1>Bienvenido de vuelta</h1>
+        <p class="auth-subtitle">Inicia sesión para continuar con tu bienestar</p>
+        <form id="loginForm" class="auth-form">
+          <label class="field">
+            <span>Correo electrónico</span>
+            <input type="email" id="loginEmail" placeholder="tú@correo.com" required>
+          </label>
+          <label class="field">
+            <span>Contraseña</span>
+            <input type="password" id="loginPassword" placeholder="••••••••" required>
+          </label>
+          <button type="submit" class="btn btn--primary">Iniciar sesión</button>
+          <p id="loginStatus" class="status"></p>
+        </form>
+        <p class="auth-switch">¿No tienes una cuenta? <button type="button" class="link" data-switch="register">Regístrate aquí</button></p>
+      </div>
+    </section>
+
+    <section id="view-register" class="view">
+      <div class="auth-card">
+        <div class="auth-avatar">
+          <span class="icon">🆕</span>
+        </div>
+        <h1>Crear cuenta</h1>
+        <p class="auth-subtitle">Únete para comenzar a monitorear tu bienestar</p>
+        <form id="registerForm" class="auth-form">
+          <label class="field">
+            <span>Nombre completo</span>
+            <input type="text" id="registerName" placeholder="Tu nombre">
+          </label>
+          <label class="field">
+            <span>Correo electrónico</span>
+            <input type="email" id="registerEmail" placeholder="tú@correo.com" required>
+          </label>
+          <label class="field">
+            <span>Edad</span>
+            <input type="number" id="registerAge" placeholder="18" min="15" max="100">
+          </label>
+          <label class="field">
+            <span>Nivel educativo</span>
+            <select id="registerEducation">
+              <option value="">Selecciona nivel</option>
+              <option>Secundaria</option>
+              <option>Bachillerato</option>
+              <option>Universidad</option>
+              <option>Postgrado</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>Contraseña</span>
+            <input type="password" id="registerPassword" placeholder="••••••••" required>
+          </label>
+          <label class="field">
+            <span>Confirmar contraseña</span>
+            <input type="password" id="registerConfirm" placeholder="••••••••" required>
+          </label>
+          <button type="submit" class="btn btn--primary">Crear cuenta</button>
+          <p id="registerStatus" class="status"></p>
+        </form>
+        <p class="auth-switch">¿Ya tienes una cuenta? <button type="button" class="link" data-switch="login">Inicia sesión aquí</button></p>
+      </div>
+    </section>
+
+    <section id="view-dashboard" class="view">
+      <header class="topbar">
+        <div>
+          <h2 id="dashboardGreeting">Hola</h2>
+          <p class="topbar-date" id="dashboardDate"></p>
+        </div>
+        <button class="btn btn--ghost" id="btnLogout">Cerrar sesión</button>
+      </header>
+
+      <section class="hero-card">
+        <div>
+          <p class="hero-subtitle">Tu bienestar es importante</p>
+          <h3>Check-in de Bienestar</h3>
+          <p class="hero-description">Toma 2 minutos para cuidar tu salud mental y emocional.</p>
+          <button class="btn btn--primary" id="btnStartGad7">Empezar ahora</button>
+          <span class="hero-points">+10 puntos al completar</span>
+        </div>
+        <div class="hero-illustration" aria-hidden="true">💫</div>
+      </section>
+
+      <section class="quick-links">
 
   <div class="app">
     <!-- LOGIN -->
@@ -210,6 +300,7 @@
         </article>
       </section>
 
+      <section id="historyPanel" class="history hidden">
       <section id="historyPanel" class="history hidden" aria-live="polite">
         <div class="history-header">
           <h3>Tu historial reciente</h3>
@@ -219,6 +310,11 @@
       </section>
     </section>
 
+    <section id="view-assessment" class="view">
+      <header class="assessment-header">
+        <button class="back" id="btnBackToDashboard" aria-label="Volver">
+          ←
+        </button>
     <!-- ASSESSMENT -->
     <section id="view-assessment" class="view">
       <header class="assessment-header">
@@ -227,6 +323,11 @@
           <p class="assessment-title" id="assessmentTitle">Check-in de Bienestar</p>
           <p class="assessment-step" id="assessmentStep"></p>
         </div>
+        <div class="progress">
+          <div class="progress-bar" id="assessmentProgress"></div>
+        </div>
+      </header>
+      <section class="question-card" id="questionCard"></section>
         <div class="progress" aria-hidden="true">
           <div class="progress-bar" id="assessmentProgress"></div>
         </div>
@@ -241,6 +342,9 @@
       </footer>
     </section>
 
+    <section id="view-result" class="view">
+      <div class="result-card">
+        <div class="result-icon">✨</div>
     <!-- RESULTADOS -->
     <section id="view-result" class="view">
       <div class="result-card">

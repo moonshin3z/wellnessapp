@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.uvg.wellnessapp.domain.AssessmentResult;
 import com.uvg.wellnessapp.service.AssessmentService;
 import com.uvg.wellnessapp.service.Phq9Service;
+import com.uvg.wellnessapp.security.AuthUtils;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -50,7 +51,7 @@ public class Phq9Controller {
     boolean shouldSave = (req.save == null) ? true : req.save;
     var r = phq9.score(req.answers);
     if (shouldSave) {
-      AssessmentResult ar = assessments.savePhq9(req.answers, req.notes, req.userId, phq9);
+      AssessmentResult ar = assessments.savePhq9(req.answers, req.notes, AuthUtils.resolveUserId(req.userId), phq9);
       return ResponseEntity.ok(new Phq9Response(ar.getId(), ar.getCreatedAt().toString(), r.total, r.category, r.message));
     } else {
       return ResponseEntity.ok(new Phq9Response(null, null, r.total, r.category, r.message));

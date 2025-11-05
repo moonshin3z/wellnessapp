@@ -577,7 +577,7 @@ function renderStats(items) {
   if (elements.statsEmpty) {
     elements.statsEmpty.classList.toggle('is-hidden', hasData);
   }
-  toggleChartCards(hasData);
+  toggleChartCards({ trend: false, severity: false });
 
   if (!hasData) {
     if (elements.statsTotalEvaluations) elements.statsTotalEvaluations.textContent = '0';
@@ -596,6 +596,7 @@ function renderStats(items) {
   const normalized = items
     .map(item => ({
       ...item,
+      total: Number.isFinite(Number(item.total)) ? Number(item.total) : 0,
       date: new Date(item.createdAt),
       typeKey: normalizeType(item.type)
     }))
@@ -637,6 +638,25 @@ function renderStats(items) {
   const labels = recent.map(item => new Intl.DateTimeFormat('es-ES', { day: '2-digit', month: 'short' }).format(item.date));
   const gadTrend = recent.map(item => item.typeKey === 'gad7' ? item.total : null);
   const phqTrend = recent.map(item => item.typeKey === 'phq9' ? item.total : null);
+  const hasTrendData = gadTrend.some(value => typeof value === 'number')
+    || phqTrend.some(value => typeof value === 'number');
+  if (hasTrendData) {
+    updateTrendChart(labels, gadTrend, phqTrend);
+  } else if (statsCharts.trend) {
+    statsCharts.trend.destroy();
+    statsCharts.trend = null;
+  }
+
+  const severityLabels = Array.from(severityCounts.keys()).sort(sortBySeverity);
+  const severityValues = severityLabels.map(label => severityCounts.get(label));
+  const hasSeverityData = severityValues.some(value => typeof value === 'number' && value > 0);
+  if (hasSeverityData) {
+    updateSeverityChart(severityLabels, severityValues);
+  } else if (statsCharts.severity) {
+    statsCharts.severity.destroy();
+    statsCharts.severity = null;
+  }
+  toggleChartCards({ trend: hasTrendData, severity: hasSeverityData });
   updateTrendChart(labels, gadTrend, phqTrend);
 
   const severityLabels = Array.from(severityCounts.keys()).sort(sortBySeverity);
@@ -648,8 +668,30 @@ function renderStats(items) {
 function toggleHistory(show) {
   if (!elements.historyPanel) return;
   elements.historyPanel.classList.toggle('hidden', !show);
-  if (show) {
-    loadHistory();
+  elements.historyPanel.setAttribute('aria-hidden', show ? 'false' : 'true');
+  if (elements.btnOpenHistory) {
+    elements.btnOpenHistory.setAttribute('aria-expanded', show ? 'true' : 'false');
+  }
+  if (!show) {
+    return;
+  }
+  const focusPanel = () => {
+    if (typeof requestAnimationFrame === 'function') {
+      requestAnimationFrame(() => {
+        if (elements.historyPanel.scrollIntoView) {
+          elements.historyPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        if (elements.historyPanel.focus) {
+          elements.historyPanel.focus({ preventScroll: true });
+        }
+      });
+    }
+  };
+  const result = loadHistory();
+  if (result && typeof result.finally === 'function') {
+    result.finally(focusPanel);
+  } else {
+    focusPanel();
   }
 }
 
@@ -783,7 +825,12 @@ if (elements.btnOpenHistory) {
 }
 
 if (elements.btnCloseHistory) {
-  elements.btnCloseHistory.addEventListener('click', () => toggleHistory(false));
+  elements.btnCloseHistory.addEventListener('click', () => {
+    toggleHistory(false);
+    if (elements.btnOpenHistory && elements.btnOpenHistory.focus) {
+      elements.btnOpenHistory.focus();
+    }
+  });
 }
 
 if (elements.btnResultDashboard) {

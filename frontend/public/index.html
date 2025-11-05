@@ -129,7 +129,7 @@
             <h4>Historial de evaluaciones</h4>
             <p>Consulta tus resultados previos y notas personales.</p>
           </div>
-          <button class="btn btn--light" id="btnOpenHistory">Ver historial</button>
+          <button class="btn btn--light" id="btnOpenHistory" type="button" aria-controls="historyPanel" aria-expanded="false">Ver historial</button>
         </article>
       </section>
 
@@ -186,10 +186,11 @@
         </div>
       </section>
 
+     
       <section id="historyPanel" class="history hidden">
         <div class="history-header">
           <h3>Tu historial reciente</h3>
-          <button class="link" id="btnCloseHistory">Ocultar</button>
+          <button class="link" id="btnCloseHistory" type="button">Ocultar</button>
         </div>
         <ul id="historyList" class="history-list"></ul>
       </section>

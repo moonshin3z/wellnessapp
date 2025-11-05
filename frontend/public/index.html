@@ -12,22 +12,15 @@
 <body>
   <div class="gradient"></div>
   <div class="app">
+    <!-- LOGIN -->
     <section id="view-login" class="view view--active">
       <div class="auth-card">
-        <div class="auth-avatar">
-          <span class="icon">👤</span>
-        </div>
+        <div class="auth-avatar"><span class="icon">👤</span></div>
         <h1>Bienvenido de vuelta</h1>
         <p class="auth-subtitle">Inicia sesión para continuar con tu bienestar</p>
         <form id="loginForm" class="auth-form">
-          <label class="field">
-            <span>Correo electrónico</span>
-            <input type="email" id="loginEmail" placeholder="tú@correo.com" required>
-          </label>
-          <label class="field">
-            <span>Contraseña</span>
-            <input type="password" id="loginPassword" placeholder="••••••••" required>
-          </label>
+          <label class="field"><span>Correo electrónico</span><input type="email" id="loginEmail" placeholder="tú@correo.com" required></label>
+          <label class="field"><span>Contraseña</span><input type="password" id="loginPassword" placeholder="••••••••" required></label>
           <button type="submit" class="btn btn--primary">Iniciar sesión</button>
           <p id="loginStatus" class="status"></p>
         </form>
@@ -35,26 +28,16 @@
       </div>
     </section>
 
+    <!-- REGISTRO -->
     <section id="view-register" class="view">
       <div class="auth-card">
-        <div class="auth-avatar">
-          <span class="icon">🆕</span>
-        </div>
+        <div class="auth-avatar"><span class="icon">🆕</span></div>
         <h1>Crear cuenta</h1>
         <p class="auth-subtitle">Únete para comenzar a monitorear tu bienestar</p>
         <form id="registerForm" class="auth-form">
-          <label class="field">
-            <span>Nombre completo</span>
-            <input type="text" id="registerName" placeholder="Tu nombre">
-          </label>
-          <label class="field">
-            <span>Correo electrónico</span>
-            <input type="email" id="registerEmail" placeholder="tú@correo.com" required>
-          </label>
-          <label class="field">
-            <span>Edad</span>
-            <input type="number" id="registerAge" placeholder="18" min="15" max="100">
-          </label>
+          <label class="field"><span>Nombre completo</span><input type="text" id="registerName" placeholder="Tu nombre"></label>
+          <label class="field"><span>Correo electrónico</span><input type="email" id="registerEmail" placeholder="tú@correo.com" required></label>
+          <label class="field"><span>Edad</span><input type="number" id="registerAge" placeholder="18" min="15" max="100"></label>
           <label class="field">
             <span>Nivel educativo</span>
             <select id="registerEducation">
@@ -65,14 +48,8 @@
               <option>Postgrado</option>
             </select>
           </label>
-          <label class="field">
-            <span>Contraseña</span>
-            <input type="password" id="registerPassword" placeholder="••••••••" required>
-          </label>
-          <label class="field">
-            <span>Confirmar contraseña</span>
-            <input type="password" id="registerConfirm" placeholder="••••••••" required>
-          </label>
+          <label class="field"><span>Contraseña</span><input type="password" id="registerPassword" placeholder="••••••••" required></label>
+          <label class="field"><span>Confirmar contraseña</span><input type="password" id="registerConfirm" placeholder="••••••••" required></label>
           <button type="submit" class="btn btn--primary">Crear cuenta</button>
           <p id="registerStatus" class="status"></p>
         </form>
@@ -80,6 +57,7 @@
       </div>
     </section>
 
+    <!-- DASHBOARD -->
     <section id="view-dashboard" class="view">
       <header class="topbar">
         <div>
@@ -101,35 +79,17 @@
       </section>
 
       <section class="quick-links">
-        <article class="quick-card">
-          <div class="quick-icon">☁️</div>
-          <div>
-            <h4>Comunidad</h4>
-            <p>Conecta con otros estudiantes y comparte estrategias.</p>
-          </div>
-        </article>
+        <article class="quick-card"><div class="quick-icon">☁️</div><div><h4>Comunidad</h4><p>Conecta con otros estudiantes y comparte estrategias.</p></div></article>
         <article class="quick-card quick-card--action">
           <div class="quick-icon">🩺</div>
-          <div>
-            <h4>Evaluaciones clínicas</h4>
-            <p>Explora las evaluaciones PHQ-9 y GAD-7 para monitorear tu progreso.</p>
-          </div>
+          <div><h4>Evaluaciones clínicas</h4><p>Explora las evaluaciones PHQ-9 y GAD-7 para monitorear tu progreso.</p></div>
           <button class="btn btn--light" id="btnStartPhq9">Iniciar PHQ-9</button>
         </article>
-        <article class="quick-card">
-          <div class="quick-icon">🧰</div>
-          <div>
-            <h4>Recursos</h4>
-            <p>Tips y herramientas útiles seleccionadas por especialistas.</p>
-          </div>
-        </article>
+        <article class="quick-card"><div class="quick-icon">🧰</div><div><h4>Recursos</h4><p>Tips y herramientas útiles seleccionadas por especialistas.</p></div></article>
         <article class="quick-card quick-card--action">
           <div class="quick-icon">📚</div>
-          <div>
-            <h4>Historial de evaluaciones</h4>
-            <p>Consulta tus resultados previos y notas personales.</p>
-          </div>
-          <button class="btn btn--light" id="btnOpenHistory" type="button" aria-controls="historyPanel" aria-expanded="false">Ver historial</button>
+          <div><h4>Historial de evaluaciones</h4><p>Consulta tus resultados previos y notas personales.</p></div>
+          <button class="btn btn--light" id="btnOpenHistory" type="button">Ver historial</button>
         </article>
       </section>
 
@@ -140,53 +100,12 @@
         </div>
         <div id="statsEmpty" class="stats-empty">Aún no hay suficientes evaluaciones para mostrar estadísticas.</div>
         <div class="insights-grid">
-          <article class="stats-card">
-            <h4>Total de evaluaciones</h4>
-            <p id="statsTotalEvaluations" class="stats-value">0</p>
-            <span class="stats-label">Se cuentan todas las evaluaciones guardadas.</span>
-          </article>
-          <article class="stats-card">
-            <h4>Promedio GAD-7</h4>
-            <p id="statsAverageGad7" class="stats-value">–</p>
-            <span class="stats-label">Suma de puntajes ÷ número de pruebas GAD-7.</span>
-          </article>
-          <article class="stats-card">
-            <h4>Promedio PHQ-9</h4>
-            <p id="statsAveragePhq9" class="stats-value">–</p>
-            <span class="stats-label">Suma de puntajes ÷ número de pruebas PHQ-9.</span>
-          </article>
-        </div>
-        <div class="latest-grid">
-          <article class="latest-card">
-            <h4>Último resultado GAD-7</h4>
-            <p id="statsLastGad7" class="latest-value">Aún no has completado un GAD-7.</p>
-          </article>
-          <article class="latest-card">
-            <h4>Último resultado PHQ-9</h4>
-            <p id="statsLastPhq9" class="latest-value">Aún no has completado un PHQ-9.</p>
-          </article>
-        </div>
-        <div class="charts-grid">
-          <article class="chart-card">
-            <header>
-              <h4>Evolución de puntajes</h4>
-              <span>Últimas evaluaciones</span>
-            </header>
-            <canvas id="statsTrend" aria-label="Gráfico de línea con la evolución de puntajes" role="img"></canvas>
-            <p class="chart-empty" data-chart-empty="trend">Completa algunas evaluaciones para ver la evolución de tus resultados.</p>
-          </article>
-          <article class="chart-card">
-            <header>
-              <h4>Distribución por categoría</h4>
-              <span>Conteo de evaluaciones por nivel</span>
-            </header>
-            <canvas id="statsSeverity" aria-label="Gráfico de barras con la distribución por categoría" role="img"></canvas>
-            <p class="chart-empty" data-chart-empty="severity">Cuando tengas evaluaciones guardadas verás aquí la distribución por niveles.</p>
-          </article>
+          <article class="stats-card"><h4>Total de evaluaciones</h4><p id="statsTotalEvaluations" class="stats-value">0</p></article>
+          <article class="stats-card"><h4>Promedio GAD-7</h4><p id="statsAverageGad7" class="stats-value">–</p></article>
+          <article class="stats-card"><h4>Promedio PHQ-9</h4><p id="statsAveragePhq9" class="stats-value">–</p></article>
         </div>
       </section>
 
-     
       <section id="historyPanel" class="history hidden">
         <div class="history-header">
           <h3>Tu historial reciente</h3>
@@ -196,18 +115,12 @@
       </section>
     </section>
 
+    <!-- ASSESSMENT -->
     <section id="view-assessment" class="view">
       <header class="assessment-header">
-        <button class="back" id="btnBackToDashboard" aria-label="Volver">
-          ←
-        </button>
-        <div>
-          <p class="assessment-title" id="assessmentTitle">Check-in de Bienestar</p>
-          <p class="assessment-step" id="assessmentStep"></p>
-        </div>
-        <div class="progress">
-          <div class="progress-bar" id="assessmentProgress"></div>
-        </div>
+        <button class="back" id="btnBackToDashboard" aria-label="Volver">←</button>
+        <div><p class="assessment-title" id="assessmentTitle">Check-in de Bienestar</p><p class="assessment-step" id="assessmentStep"></p></div>
+        <div class="progress"><div class="progress-bar" id="assessmentProgress"></div></div>
       </header>
       <section class="question-card" id="questionCard"></section>
       <footer class="assessment-footer">
@@ -217,6 +130,7 @@
       </footer>
     </section>
 
+    <!-- RESULTADOS -->
     <section id="view-result" class="view">
       <div class="result-card">
         <div class="result-icon">✨</div>
@@ -233,7 +147,37 @@
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" integrity="sha384-vlY97Ts7uaEUfZOwmC1TpM1ddBUIZh9rqx8pNzBYU2yk6dHQXxNE5eUl2ViBZAxP" crossorigin="anonymous"></script>
+  <!-- 🔹 BOTÓN DE AYUDA 🔹 -->
+  <div class="help-widget" aria-hidden="false">
+    <button id="help-toggle" class="help-btn" aria-label="Abrir ayuda" aria-haspopup="true" aria-expanded="false">❓</button>
+    <nav id="help-panel" class="help-panel" aria-label="Menú de ayuda" hidden>
+      <header class="help-panel-header">
+        <strong>Recursos y ayuda</strong>
+        <button id="help-close" class="help-close" aria-label="Cerrar">✖</button>
+      </header>
+      <ul class="help-list">
+        <li><button class="help-item" data-action="crisis">📞 Línea de crisis — <strong>2331-7101</strong></button></li>
+        <li><button class="help-item" data-action="primeros">🪜 Primeros pasos</button></li>
+        <li><button class="help-item" data-action="finanzas">💰 Tips financieros</button></li>
+        <li><button class="help-item" data-action="rapidos">⚡ Tips rápidos</button></li>
+      </ul>
+    </nav>
+  </div>
+
+  <!-- Modal de crisis -->
+  <div id="modal-crisis" class="help-modal" hidden>
+    <div class="help-modal-content">
+      <h3>📞 Línea de crisis universitaria</h3>
+      <p>Si necesitas hablar con alguien, puedes comunicarte con:</p>
+      <p><strong>2331-7101</strong></p>
+      <div class="help-modal-actions">
+        <a href="tel:23317101" class="btn btn--primary">Llamar ahora</a>
+        <button id="modal-crisis-close" class="btn btn--light">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" crossorigin="anonymous"></script>
   <script src="js/app.js?v=2"></script>
 </body>
 </html>

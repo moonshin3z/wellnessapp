@@ -133,6 +133,57 @@
         </article>
       </section>
 
+      <section id="statsSection" class="insights">
+        <div class="insights-header">
+          <h3>Estadísticas de tus evaluaciones</h3>
+          <p>Consulta tu progreso y las tendencias recientes de tus resultados.</p>
+        </div>
+        <div id="statsEmpty" class="stats-empty">Aún no hay suficientes evaluaciones para mostrar estadísticas.</div>
+        <div class="insights-grid">
+          <article class="stats-card">
+            <h4>Total de evaluaciones</h4>
+            <p id="statsTotalEvaluations" class="stats-value">0</p>
+            <span class="stats-label">Se cuentan todas las evaluaciones guardadas.</span>
+          </article>
+          <article class="stats-card">
+            <h4>Promedio GAD-7</h4>
+            <p id="statsAverageGad7" class="stats-value">–</p>
+            <span class="stats-label">Suma de puntajes ÷ número de pruebas GAD-7.</span>
+          </article>
+          <article class="stats-card">
+            <h4>Promedio PHQ-9</h4>
+            <p id="statsAveragePhq9" class="stats-value">–</p>
+            <span class="stats-label">Suma de puntajes ÷ número de pruebas PHQ-9.</span>
+          </article>
+        </div>
+        <div class="latest-grid">
+          <article class="latest-card">
+            <h4>Último resultado GAD-7</h4>
+            <p id="statsLastGad7" class="latest-value">Aún no has completado un GAD-7.</p>
+          </article>
+          <article class="latest-card">
+            <h4>Último resultado PHQ-9</h4>
+            <p id="statsLastPhq9" class="latest-value">Aún no has completado un PHQ-9.</p>
+          </article>
+        </div>
+        <div class="charts-grid">
+          <article class="chart-card">
+            <header>
+              <h4>Evolución de puntajes</h4>
+              <span>Últimas evaluaciones</span>
+            </header>
+            <canvas id="statsTrend" aria-label="Gráfico de línea con la evolución de puntajes" role="img"></canvas>
+          </article>
+          <article class="chart-card">
+            <header>
+              <h4>Distribución por categoría</h4>
+              <span>Conteo de evaluaciones por nivel</span>
+            </header>
+            <canvas id="statsSeverity" aria-label="Gráfico de barras con la distribución por categoría" role="img"></canvas>
+          </article>
+        </div>
+      </section>
+
       <section id="historyPanel" class="history hidden">
         <div class="history-header">
           <h3>Tu historial reciente</h3>
@@ -179,6 +230,7 @@
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" integrity="sha384-vlY97Ts7uaEUfZOwmC1TpM1ddBUIZh9rqx8pNzBYU2yk6dHQXxNE5eUl2ViBZAxP" crossorigin="anonymous"></script>
   <script src="js/app.js?v=2"></script>
 </body>
 </html>

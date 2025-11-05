@@ -34,11 +34,45 @@ const elements = {
   btnResultDashboard: document.getElementById('btnResultDashboard'),
   btnResultHistory: document.getElementById('btnResultHistory'),
   toast: document.getElementById('toast'),
+  statsSection: document.getElementById('statsSection'),
+  statsEmpty: document.getElementById('statsEmpty'),
+  statsTotalEvaluations: document.getElementById('statsTotalEvaluations'),
+  statsAverageGad7: document.getElementById('statsAverageGad7'),
+  statsAveragePhq9: document.getElementById('statsAveragePhq9'),
+  statsLastGad7: document.getElementById('statsLastGad7'),
+  statsLastPhq9: document.getElementById('statsLastPhq9'),
+  statsTrend: document.getElementById('statsTrend'),
+  statsSeverity: document.getElementById('statsSeverity'),
 };
 
 let currentUser = null;
 let currentAssessment = null;
 let lastResultType = null;
+
+const statsCharts = {
+  trend: null,
+  severity: null
+};
+
+function destroyStatsCharts() {
+  if (statsCharts.trend) {
+    statsCharts.trend.destroy();
+    statsCharts.trend = null;
+  }
+  if (statsCharts.severity) {
+    statsCharts.severity.destroy();
+    statsCharts.severity = null;
+  }
+}
+
+const chartColors = {
+  gad7: '#5d5fef',
+  phq9: '#ff8ec5'
+};
+
+const severityOrder = [
+  'Sin síntomas', 'Mínimo', 'Leve', 'Moderado', 'Moderadamente severo', 'Grave', 'Severo'
+];
 
 // --- Utility helpers ---
 function showView(id) {
@@ -110,8 +144,10 @@ function ensureAuth() {
     currentUser = profile;
     updateDashboard();
     showView('view-dashboard');
+    loadHistory();
   } else {
     showView('view-login');
+    renderStats([]);
   }
 }
 
@@ -375,6 +411,7 @@ async function loadHistory() {
   try {
     const items = await apiHistory();
     renderHistory(items);
+    renderStats(items);
   } catch (error) {
     console.error(error);
     showToast('No se pudo cargar el historial.');
@@ -402,6 +439,190 @@ function renderHistory(items) {
   });
 }
 
+function normalizeType(type) {
+  const text = (type || '').toLowerCase();
+  if (text.includes('phq')) return 'phq9';
+  return 'gad7';
+}
+
+function formatResultSummary(item) {
+  if (!item) return '';
+  const date = new Date(item.createdAt);
+  const dateText = isNaN(date.getTime())
+    ? ''
+    : new Intl.DateTimeFormat('es-ES', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }).format(date);
+  const categoryText = item.category ? ` · ${item.category}` : '';
+  return `${item.total} puntos${categoryText}${dateText ? ` · ${dateText}` : ''}`;
+}
+
+function sortBySeverity(a, b) {
+  const idxA = severityOrder.indexOf(a);
+  const idxB = severityOrder.indexOf(b);
+  const safeA = idxA === -1 ? Number.MAX_SAFE_INTEGER : idxA;
+  const safeB = idxB === -1 ? Number.MAX_SAFE_INTEGER : idxB;
+  if (safeA === safeB) return a.localeCompare(b, 'es');
+  return safeA - safeB;
+}
+
+function updateTrendChart(labels, gadData, phqData) {
+  if (!elements.statsTrend || typeof Chart === 'undefined') return;
+  const datasets = [
+    {
+      label: 'GAD-7',
+      data: gadData,
+      borderColor: chartColors.gad7,
+      backgroundColor: chartColors.gad7,
+      tension: 0.35,
+      pointRadius: 4,
+      spanGaps: true
+    },
+    {
+      label: 'PHQ-9',
+      data: phqData,
+      borderColor: chartColors.phq9,
+      backgroundColor: chartColors.phq9,
+      tension: 0.35,
+      pointRadius: 4,
+      spanGaps: true
+    }
+  ];
+  if (!statsCharts.trend) {
+    statsCharts.trend = new Chart(elements.statsTrend, {
+      type: 'line',
+      data: { labels, datasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: { stepSize: 2 }
+          }
+        },
+        plugins: {
+          legend: { position: 'bottom', labels: { usePointStyle: true } },
+          tooltip: { mode: 'index', intersect: false }
+        }
+      }
+    });
+  } else {
+    statsCharts.trend.data.labels = labels;
+    statsCharts.trend.data.datasets[0].data = gadData;
+    statsCharts.trend.data.datasets[1].data = phqData;
+    statsCharts.trend.update();
+  }
+}
+
+function updateSeverityChart(labels, values) {
+  if (!elements.statsSeverity || typeof Chart === 'undefined') return;
+  const colors = labels.map((_, index) => index % 2 === 0 ? 'rgba(93, 95, 239, 0.65)' : 'rgba(255, 142, 197, 0.65)');
+  if (!statsCharts.severity) {
+    statsCharts.severity = new Chart(elements.statsSeverity, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Evaluaciones',
+          data: values,
+          backgroundColor: colors,
+          borderRadius: 6
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: { precision: 0 }
+          }
+        }
+      }
+    });
+  } else {
+    statsCharts.severity.data.labels = labels;
+    statsCharts.severity.data.datasets[0].data = values;
+    statsCharts.severity.data.datasets[0].backgroundColor = colors;
+    statsCharts.severity.update();
+  }
+}
+
+function renderStats(items) {
+  if (!elements.statsSection) return;
+  const hasData = Array.isArray(items) && items.length > 0;
+  elements.statsSection.classList.toggle('insights--empty', !hasData);
+  if (elements.statsEmpty) {
+    elements.statsEmpty.classList.toggle('is-hidden', hasData);
+  }
+
+  if (!hasData) {
+    if (elements.statsTotalEvaluations) elements.statsTotalEvaluations.textContent = '0';
+    if (elements.statsAverageGad7) elements.statsAverageGad7.textContent = '–';
+    if (elements.statsAveragePhq9) elements.statsAveragePhq9.textContent = '–';
+    if (elements.statsLastGad7) elements.statsLastGad7.textContent = 'Aún no has completado un GAD-7.';
+    if (elements.statsLastPhq9) elements.statsLastPhq9.textContent = 'Aún no has completado un PHQ-9.';
+    destroyStatsCharts();
+    return;
+  }
+
+  if (elements.statsTotalEvaluations) {
+    elements.statsTotalEvaluations.textContent = `${items.length}`;
+  }
+
+  const normalized = items
+    .map(item => ({
+      ...item,
+      date: new Date(item.createdAt),
+      typeKey: normalizeType(item.type)
+    }))
+    .filter(item => !Number.isNaN(item.date.getTime()))
+    .sort((a, b) => a.date - b.date);
+
+  const grouped = { gad7: [], phq9: [] };
+  const severityCounts = new Map();
+
+  normalized.forEach(item => {
+    grouped[item.typeKey].push(item);
+    const label = (item.category || 'Sin categoría').trim();
+    severityCounts.set(label, (severityCounts.get(label) || 0) + 1);
+  });
+
+  const average = (arr) => arr.length ? (arr.reduce((sum, entry) => sum + entry.total, 0) / arr.length) : null;
+
+  const avgGad = average(grouped.gad7);
+  const avgPhq = average(grouped.phq9);
+
+  if (elements.statsAverageGad7) {
+    elements.statsAverageGad7.textContent = (avgGad !== null) ? `${avgGad.toFixed(1)} pts` : 'Sin datos';
+  }
+  if (elements.statsAveragePhq9) {
+    elements.statsAveragePhq9.textContent = (avgPhq !== null) ? `${avgPhq.toFixed(1)} pts` : 'Sin datos';
+  }
+
+  const lastGad = grouped.gad7[grouped.gad7.length - 1];
+  const lastPhq = grouped.phq9[grouped.phq9.length - 1];
+
+  if (elements.statsLastGad7) {
+    elements.statsLastGad7.textContent = lastGad ? formatResultSummary(lastGad) : 'Aún no has completado un GAD-7.';
+  }
+  if (elements.statsLastPhq9) {
+    elements.statsLastPhq9.textContent = lastPhq ? formatResultSummary(lastPhq) : 'Aún no has completado un PHQ-9.';
+  }
+
+  const recent = normalized.slice(-10);
+  const labels = recent.map(item => new Intl.DateTimeFormat('es-ES', { day: '2-digit', month: 'short' }).format(item.date));
+  const gadTrend = recent.map(item => item.typeKey === 'gad7' ? item.total : null);
+  const phqTrend = recent.map(item => item.typeKey === 'phq9' ? item.total : null);
+  updateTrendChart(labels, gadTrend, phqTrend);
+
+  const severityLabels = Array.from(severityCounts.keys()).sort(sortBySeverity);
+  const severityValues = severityLabels.map(label => severityCounts.get(label));
+  updateSeverityChart(severityLabels, severityValues);
+}
+
 function toggleHistory(show) {
   if (!elements.historyPanel) return;
   elements.historyPanel.classList.toggle('hidden', !show);
@@ -426,6 +647,7 @@ if (elements.loginForm) {
       updateDashboard();
       showToast('¡Bienvenido de vuelta!');
       showView('view-dashboard');
+      loadHistory();
       elements.loginForm.reset();
       setStatus(elements.loginStatus, '', null);
     } catch (error) {
@@ -484,6 +706,7 @@ if (elements.btnLogout) {
     clearProfile();
     currentUser = null;
     toggleHistory(false);
+    renderStats([]);
     showView('view-login');
     showToast('Sesión cerrada.');
   });

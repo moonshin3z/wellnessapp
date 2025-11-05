@@ -760,3 +760,136 @@ select:focus {
     bottom: 18px;
   }
 }
+
+.help-widget {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 1400;
+  display: grid;
+  gap: 8px;
+  align-items: end;
+  font-family: inherit;
+}
+
+.help-btn {
+  width: 56px;
+  height: 56px;
+  border-radius: 999px;
+  border: none;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  background: linear-gradient(180deg, var(--accent), var(--accent-dark));
+  color: #fff;
+  box-shadow: 0 12px 30px rgba(21, 26, 51, 0.12);
+  transition: transform var(--transition), box-shadow var(--transition);
+}
+.help-btn:active { transform: translateY(1px) scale(.99); }
+.help-btn svg { width: 26px; height: 26px; }
+
+.help-panel {
+  width: 320px;
+  max-width: calc(100vw - 48px);
+  background: var(--card-bg);
+  border-radius: 14px;
+  box-shadow: 0 18px 45px rgba(21, 26, 51, 0.14);
+  border: 1px solid rgba(21, 26, 51, 0.05);
+  overflow: hidden;
+  animation: help-pop .12s ease;
+}
+@keyframes help-pop { from { transform: scale(.98); opacity: 0 } to { transform: scale(1); opacity: 1 } }
+
+.help-panel-header {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(21,26,51,0.04);
+}
+.help-panel-header strong { font-size: 1rem; color: var(--text-primary); }
+.help-close {
+  border: none;
+  background: transparent;
+  font-size: 20px;
+  cursor: pointer;
+  color: var(--text-secondary);
+}
+
+.help-list { list-style: none; margin:0; padding:12px; display:grid; gap:8px; }
+.help-item {
+  width:100%;
+  text-align:left;
+  background: transparent;
+  border: none;
+  padding: 10px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--text-primary);
+  transition: background var(--transition), transform var(--transition);
+}
+.help-item:hover, .help-item:focus {
+  background: rgba(93,95,239,0.06);
+  transform: translateX(6px);
+  outline: none;
+}
+
+/* Modal (línea de crisis) */
+.modal {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(6,10,24,0.48);
+  z-index: 1500;
+  padding: 20px;
+}
+.modal-sheet {
+  width: min(640px, 96%);
+  background: var(--card-bg);
+  border-radius: 14px;
+  padding: 20px;
+  box-shadow: var(--shadow-soft);
+  border: 1px solid rgba(21,26,51,0.05);
+}
+.modal header { display:flex; justify-content:space-between; align-items:center; gap:12px; }
+.modal h3 { margin:0; font-size:1.05rem; }
+.modal-close { background:none; border:none; font-size:20px; cursor:pointer; color:var(--text-secondary); }
+
+.crisis-info { margin-top:12px; display:grid; gap:10px; }
+.phone-number { font-weight:700; font-size:1.25rem; color:var(--text-primary); }
+.phone-actions { display:flex; gap:10px; margin-top:6px; flex-wrap:wrap; }
+.btn.help-call {
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-dark));
+  color: #fff;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* toast pequeño específico del widget (no reemplaza .toast global) */
+.help-toast {
+  position: fixed;
+  right: 20px;
+  bottom: 92px;
+  background: rgba(21,26,51,0.92);
+  color: white;
+  padding: 10px 14px;
+  border-radius: 10px;
+  box-shadow: 0 12px 30px rgba(21,26,51,0.18);
+  z-index: 1600;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity var(--transition), transform var(--transition);
+}
+.help-toast.is-visible { opacity: 1; transform: translateY(0); }
+
+@media (max-width: 420px) {
+  .help-panel { width: calc(100vw - 36px); right: 12px; bottom: 78px; }
+  .help-btn { width: 50px; height: 50px; }
+  .help-toast { left: 12px; right: 12px; bottom: 84px; }
+}

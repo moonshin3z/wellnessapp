@@ -847,3 +847,159 @@ if (elements.btnResultHistory) {
 }
 
 ensureAuth();
+
+/* ---------------------------
+   Help widget behavior (integración con app.js)
+   Número de crisis: 2331-7101
+   --------------------------- */
+(function () {
+  const CRISIS_NUMBER = '2331-7101';
+
+  const toggle = document.getElementById('help-toggle');
+  const panel = document.getElementById('help-panel');
+  const closeBtn = document.getElementById('help-close');
+  const modalCrisis = document.getElementById('modal-crisis');
+  const modalCrisisClose = document.getElementById('modal-crisis-close');
+  const copyNumberBtn = document.getElementById('copy-number');
+  const callLink = document.getElementById('call-link');
+  const crisisNumberEl = document.getElementById('crisis-number');
+
+  // Si el HTML del widget no está agregado al index, salimos silenciosamente
+  if (!toggle || !panel) return;
+
+  // Inicializar número y enlace si existen los elementos
+  if (crisisNumberEl) crisisNumberEl.textContent = CRISIS_NUMBER;
+  if (callLink) callLink.href = `tel:${CRISIS_NUMBER.replace(/\s+/g, '')}`;
+
+  function openPanel() {
+    panel.hidden = false;
+    toggle.setAttribute('aria-expanded', 'true');
+    const first = panel.querySelector('[role="menuitem"], .help-item, button');
+    if (first && typeof first.focus === 'function') first.focus();
+  }
+  function closePanel() {
+    panel.hidden = true;
+    toggle.setAttribute('aria-expanded', 'false');
+    if (typeof toggle.focus === 'function') toggle.focus();
+  }
+
+  // Toggle al pulsar el botón
+  toggle.addEventListener('click', (e) => {
+    const isOpen = panel && !panel.hidden;
+    if (isOpen) closePanel(); else openPanel();
+  });
+
+  if (closeBtn) closeBtn.addEventListener('click', closePanel);
+
+  // Cerrar si se hace click fuera del panel
+  document.addEventListener('click', (e) => {
+    if (!panel || panel.hidden) return;
+    const isInside = panel.contains(e.target) || toggle.contains(e.target);
+    if (!isInside) closePanel();
+  });
+
+  // Teclado: Esc cierra modal o panel
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      if (modalCrisis && !modalCrisis.hidden) {
+        closeModalCrisis();
+      } else if (!panel.hidden) {
+        closePanel();
+      }
+    }
+  });
+
+  // Delegación para pulsar items del panel
+  panel.addEventListener('click', (ev) => {
+    const btn = ev.target.closest('.help-item, [role="menuitem"], button');
+    if (!btn) return;
+    const target = btn.dataset.target;
+    const action = btn.dataset.action;
+
+    closePanel();
+
+    // Acción: abrir modal de crisis
+    if (action === 'crisis') {
+      openModalCrisis();
+      return;
+    }
+
+    // Acción: iniciar chat -> por ahora sólo muestra toast y navega si target existe
+    if (action === 'chat') {
+      const destino = document.querySelector('#statsSection') || document.querySelector('.app');
+      if (destino) destino.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      showToast('Chat de apoyo: componente no implementado.'); // usa showToast existente
+      return;
+    }
+
+    // Si tiene selector de target -> hacer scroll
+    if (target) {
+      try {
+        const el = document.querySelector(target);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          showToast('Abriendo sección solicitada.');
+        } else {
+          showToast('Sección no encontrada en la página.');
+        }
+      } catch (err) {
+        console.warn('Selector inválido:', target);
+        showToast('Error al navegar a la sección.');
+      }
+    }
+  });
+
+  // Modal crisis
+  function openModalCrisis() {
+    if (!modalCrisis) return;
+    modalCrisis.hidden = false;
+    const close = modalCrisis.querySelector('.modal-close, #modal-crisis-close');
+    if (close && typeof close.focus === 'function') close.focus();
+  }
+  function closeModalCrisis() {
+    if (!modalCrisis) return;
+    modalCrisis.hidden = true;
+    if (typeof toggle.focus === 'function') toggle.focus();
+  }
+  if (modalCrisisClose) modalCrisisClose.addEventListener('click', closeModalCrisis);
+  if (modalCrisis) {
+    modalCrisis.addEventListener('click', (e) => {
+      if (e.target === modalCrisis) closeModalCrisis();
+    });
+  }
+
+  // Copiar número al portapapeles con fallback
+  if (copyNumberBtn) {
+    copyNumberBtn.addEventListener('click', async () => {
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(CRISIS_NUMBER);
+          showToast('Número copiado al portapapeles');
+        } else {
+          // fallback: seleccionar texto y copiar con execCommand
+          const el = crisisNumberEl || document.createElement('span');
+          if (!crisisNumberEl) {
+            el.textContent = CRISIS_NUMBER;
+            el.style.position = 'fixed';
+            el.style.left = '-9999px';
+            document.body.appendChild(el);
+          }
+          const range = document.createRange();
+          range.selectNodeContents(el);
+          const sel = window.getSelection();
+          sel.removeAllRanges();
+          sel.addRange(range);
+          document.execCommand('copy');
+          sel.removeAllRanges();
+          if (!crisisNumberEl) el.remove();
+          showToast('Número copiado (método alternativo).');
+        }
+      } catch (err) {
+        console.error('Error copiando número:', err);
+        showToast('No se pudo copiar el número. Copia manualmente.');
+      }
+    });
+  }
+
+  // Si el navegador no soporta clipboard, dejamos botón visible (fallback arriba cubrirá)
+})();

@@ -297,6 +297,165 @@ select:focus {
   justify-content: space-between;
 }
 
+.insights {
+  width: 100%;
+  margin-top: 32px;
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: var(--radius-md);
+  padding: 28px;
+  box-shadow: var(--shadow-soft);
+  backdrop-filter: blur(16px);
+  display: grid;
+  gap: 24px;
+}
+
+.insights-header h3 {
+  margin: 0;
+  font-size: 1.4rem;
+}
+
+.insights-header p {
+  margin: 8px 0 0;
+  color: var(--text-secondary);
+}
+
+.stats-empty {
+  margin: 0;
+  padding: 16px;
+  border-radius: var(--radius-sm);
+  background: rgba(93, 95, 239, 0.08);
+  color: var(--text-secondary);
+}
+
+.insights-grid {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.stats-card {
+  background: rgba(93, 95, 239, 0.07);
+  border-radius: var(--radius-sm);
+  padding: 20px 22px;
+  display: grid;
+  gap: 8px;
+}
+
+.stats-card h4 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.stats-value {
+  margin: 0;
+  font-size: 1.8rem;
+  font-weight: 700;
+}
+
+.stats-label {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.latest-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 18px;
+}
+
+.latest-card {
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-sm);
+  padding: 18px 20px;
+  display: grid;
+  gap: 8px;
+}
+
+.latest-card h4 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.latest-value {
+  margin: 0;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.charts-grid {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.chart-card {
+  background: rgba(255, 255, 255, 0.88);
+  border-radius: var(--radius-sm);
+  padding: 18px 20px 24px;
+  border: 1px solid var(--card-border);
+  display: grid;
+  gap: 12px;
+}
+
+.chart-card header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.chart-card header h4 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.chart-card header span {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+
+.chart-card canvas {
+  width: 100%;
+  max-height: 260px;
+}
+
+
+.insights.insights--empty .stats-card,
+.insights.insights--empty .latest-card,
+.insights.insights--empty .chart-card {
+  opacity: 0.75;
+}
+
+.chart-card {
+  position: relative;
+}
+
+.chart-empty {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  text-align: center;
+  padding: 24px 12px;
+  border: 1px dashed rgba(93, 95, 239, 0.3);
+  border-radius: var(--radius-sm);
+}
+
+.chart-card .chart-empty {
+  display: none;
+}
+
+.chart-card.is-empty canvas {
+  display: none;
+}
+
+.chart-card.is-empty .chart-empty {
+  display: block;
+}
+
+.is-hidden {
+  display: none !important;
+}
+
 .history {
   width: 100%;
   margin-top: 24px;

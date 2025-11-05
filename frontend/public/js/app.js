@@ -43,6 +43,8 @@ const elements = {
   statsLastPhq9: document.getElementById('statsLastPhq9'),
   statsTrend: document.getElementById('statsTrend'),
   statsSeverity: document.getElementById('statsSeverity'),
+  statsTrendEmpty: document.querySelector('[data-chart-empty="trend"]'),
+  statsSeverityEmpty: document.querySelector('[data-chart-empty="severity"]'),
 };
 
 let currentUser = null;
@@ -63,6 +65,24 @@ function destroyStatsCharts() {
     statsCharts.severity.destroy();
     statsCharts.severity = null;
   }
+}
+
+function toggleChartCards(hasData) {
+  const chartPairs = [
+    { canvas: elements.statsTrend, empty: elements.statsTrendEmpty },
+    { canvas: elements.statsSeverity, empty: elements.statsSeverityEmpty }
+  ];
+
+  chartPairs.forEach(({ canvas, empty }) => {
+    if (!canvas) return;
+    const card = canvas.closest('.chart-card');
+    if (card) {
+      card.classList.toggle('is-empty', !hasData);
+    }
+    if (empty) {
+      empty.classList.toggle('is-hidden', hasData);
+    }
+  });
 }
 
 const chartColors = {
@@ -557,6 +577,7 @@ function renderStats(items) {
   if (elements.statsEmpty) {
     elements.statsEmpty.classList.toggle('is-hidden', hasData);
   }
+  toggleChartCards(hasData);
 
   if (!hasData) {
     if (elements.statsTotalEvaluations) elements.statsTotalEvaluations.textContent = '0';
@@ -621,6 +642,7 @@ function renderStats(items) {
   const severityLabels = Array.from(severityCounts.keys()).sort(sortBySeverity);
   const severityValues = severityLabels.map(label => severityCounts.get(label));
   updateSeverityChart(severityLabels, severityValues);
+  toggleChartCards(true);
 }
 
 function toggleHistory(show) {

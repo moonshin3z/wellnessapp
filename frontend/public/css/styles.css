@@ -419,10 +419,37 @@ select:focus {
   max-height: 260px;
 }
 
-.insights.insights--empty .insights-grid,
-.insights.insights--empty .latest-grid,
-.insights.insights--empty .charts-grid {
+
+.insights.insights--empty .stats-card,
+.insights.insights--empty .latest-card,
+.insights.insights--empty .chart-card {
+  opacity: 0.75;
+}
+
+.chart-card {
+  position: relative;
+}
+
+.chart-empty {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  text-align: center;
+  padding: 24px 12px;
+  border: 1px dashed rgba(93, 95, 239, 0.3);
+  border-radius: var(--radius-sm);
+}
+
+.chart-card .chart-empty {
   display: none;
+}
+
+.chart-card.is-empty canvas {
+  display: none;
+}
+
+.chart-card.is-empty .chart-empty {
+  display: block;
 }
 
 .is-hidden {

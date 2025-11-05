@@ -67,22 +67,14 @@ function destroyStatsCharts() {
   }
 }
 
-function toggleChartCards(state) {
-  const resolved = (typeof state === 'object' && state !== null)
-    ? {
-        trend: Boolean(state.trend),
-        severity: Boolean(state.severity)
-      }
-    : { trend: Boolean(state), severity: Boolean(state) };
-
+function toggleChartCards(hasData) {
   const chartPairs = [
-    { key: 'trend', canvas: elements.statsTrend, empty: elements.statsTrendEmpty },
-    { key: 'severity', canvas: elements.statsSeverity, empty: elements.statsSeverityEmpty }
+    { canvas: elements.statsTrend, empty: elements.statsTrendEmpty },
+    { canvas: elements.statsSeverity, empty: elements.statsSeverityEmpty }
   ];
 
-  chartPairs.forEach(({ key, canvas, empty }) => {
+  chartPairs.forEach(({ canvas, empty }) => {
     if (!canvas) return;
-    const hasData = resolved[key];
     const card = canvas.closest('.chart-card');
     if (card) {
       card.classList.toggle('is-empty', !hasData);
@@ -665,6 +657,12 @@ function renderStats(items) {
     statsCharts.severity = null;
   }
   toggleChartCards({ trend: hasTrendData, severity: hasSeverityData });
+  updateTrendChart(labels, gadTrend, phqTrend);
+
+  const severityLabels = Array.from(severityCounts.keys()).sort(sortBySeverity);
+  const severityValues = severityLabels.map(label => severityCounts.get(label));
+  updateSeverityChart(severityLabels, severityValues);
+  toggleChartCards(true);
 }
 
 function toggleHistory(show) {

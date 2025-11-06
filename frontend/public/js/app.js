@@ -34,6 +34,17 @@ const elements = {
   btnResultDashboard: document.getElementById('btnResultDashboard'),
   btnResultHistory: document.getElementById('btnResultHistory'),
   toast: document.getElementById('toast'),
+  statsSection: document.getElementById('statsSection'),
+  statsEmpty: document.getElementById('statsEmpty'),
+  statsTotalEvaluations: document.getElementById('statsTotalEvaluations'),
+  statsAverageGad7: document.getElementById('statsAverageGad7'),
+  statsAveragePhq9: document.getElementById('statsAveragePhq9'),
+  statsLastGad7: document.getElementById('statsLastGad7'),
+  statsLastPhq9: document.getElementById('statsLastPhq9'),
+  statsTrend: document.getElementById('statsTrend'),
+  statsSeverity: document.getElementById('statsSeverity'),
+  statsTrendEmpty: document.querySelector('[data-chart-empty="trend"]'),
+  statsSeverityEmpty: document.querySelector('[data-chart-empty="severity"]'),
 };
 
 if (elements.historyPanel) {
@@ -868,6 +879,212 @@ function renderHistory(items) {
   });
 }
 
+function normalizeType(type) {
+  const text = (type || '').toLowerCase();
+  if (text.includes('phq')) return 'phq9';
+  return 'gad7';
+}
+
+function formatResultSummary(item) {
+  if (!item) return '';
+  const date = new Date(item.createdAt);
+  const dateText = isNaN(date.getTime())
+    ? ''
+    : new Intl.DateTimeFormat('es-ES', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }).format(date);
+  const categoryText = item.category ? ` · ${item.category}` : '';
+  return `${item.total} puntos${categoryText}${dateText ? ` · ${dateText}` : ''}`;
+}
+
+function sortBySeverity(a, b) {
+  const idxA = severityOrder.indexOf(a);
+  const idxB = severityOrder.indexOf(b);
+  const safeA = idxA === -1 ? Number.MAX_SAFE_INTEGER : idxA;
+  const safeB = idxB === -1 ? Number.MAX_SAFE_INTEGER : idxB;
+  if (safeA === safeB) return a.localeCompare(b, 'es');
+  return safeA - safeB;
+}
+
+function updateTrendChart(labels, gadData, phqData) {
+  if (!elements.statsTrend || typeof Chart === 'undefined') return;
+  const datasets = [
+    {
+      label: 'GAD-7',
+      data: gadData,
+      borderColor: chartColors.gad7,
+      backgroundColor: chartColors.gad7,
+      tension: 0.35,
+      pointRadius: 4,
+      spanGaps: true
+    },
+    {
+      label: 'PHQ-9',
+      data: phqData,
+      borderColor: chartColors.phq9,
+      backgroundColor: chartColors.phq9,
+      tension: 0.35,
+      pointRadius: 4,
+      spanGaps: true
+    }
+  ];
+  if (!statsCharts.trend) {
+    statsCharts.trend = new Chart(elements.statsTrend, {
+      type: 'line',
+      data: { labels, datasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: { stepSize: 2 }
+          }
+        },
+        plugins: {
+          legend: { position: 'bottom', labels: { usePointStyle: true } },
+          tooltip: { mode: 'index', intersect: false }
+        }
+      }
+    });
+  } else {
+    statsCharts.trend.data.labels = labels;
+    statsCharts.trend.data.datasets[0].data = gadData;
+    statsCharts.trend.data.datasets[1].data = phqData;
+    statsCharts.trend.update();
+  }
+}
+
+function updateSeverityChart(labels, values) {
+  if (!elements.statsSeverity || typeof Chart === 'undefined') return;
+  const colors = labels.map((_, index) => index % 2 === 0 ? 'rgba(93, 95, 239, 0.65)' : 'rgba(255, 142, 197, 0.65)');
+  if (!statsCharts.severity) {
+    statsCharts.severity = new Chart(elements.statsSeverity, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Evaluaciones',
+          data: values,
+          backgroundColor: colors,
+          borderRadius: 6
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: { precision: 0 }
+          }
+        }
+      }
+    });
+  } else {
+    statsCharts.severity.data.labels = labels;
+    statsCharts.severity.data.datasets[0].data = values;
+    statsCharts.severity.data.datasets[0].backgroundColor = colors;
+    statsCharts.severity.update();
+  }
+}
+
+function renderStats(items) {
+  if (!elements.statsSection) return;
+  const hasData = Array.isArray(items) && items.length > 0;
+  elements.statsSection.classList.toggle('insights--empty', !hasData);
+  if (elements.statsEmpty) {
+    elements.statsEmpty.classList.toggle('is-hidden', hasData);
+  }
+  toggleChartCards({ trend: false, severity: false });
+
+  if (!hasData) {
+    if (elements.statsTotalEvaluations) elements.statsTotalEvaluations.textContent = '0';
+    if (elements.statsAverageGad7) elements.statsAverageGad7.textContent = '–';
+    if (elements.statsAveragePhq9) elements.statsAveragePhq9.textContent = '–';
+    if (elements.statsLastGad7) elements.statsLastGad7.textContent = 'Aún no has completado un GAD-7.';
+    if (elements.statsLastPhq9) elements.statsLastPhq9.textContent = 'Aún no has completado un PHQ-9.';
+    destroyStatsCharts();
+    return;
+  }
+
+  if (elements.statsTotalEvaluations) {
+    elements.statsTotalEvaluations.textContent = `${items.length}`;
+  }
+
+  const normalized = items
+    .map(item => ({
+      ...item,
+      total: Number.isFinite(Number(item.total)) ? Number(item.total) : 0,
+      date: new Date(item.createdAt),
+      typeKey: normalizeType(item.type)
+    }))
+    .filter(item => !Number.isNaN(item.date.getTime()))
+    .sort((a, b) => a.date - b.date);
+
+  const grouped = { gad7: [], phq9: [] };
+  const severityCounts = new Map();
+
+  normalized.forEach(item => {
+    grouped[item.typeKey].push(item);
+    const label = (item.category || 'Sin categoría').trim();
+    severityCounts.set(label, (severityCounts.get(label) || 0) + 1);
+  });
+
+  const average = (arr) => arr.length ? (arr.reduce((sum, entry) => sum + entry.total, 0) / arr.length) : null;
+
+  const avgGad = average(grouped.gad7);
+  const avgPhq = average(grouped.phq9);
+
+  if (elements.statsAverageGad7) {
+    elements.statsAverageGad7.textContent = (avgGad !== null) ? `${avgGad.toFixed(1)} pts` : 'Sin datos';
+  }
+  if (elements.statsAveragePhq9) {
+    elements.statsAveragePhq9.textContent = (avgPhq !== null) ? `${avgPhq.toFixed(1)} pts` : 'Sin datos';
+  }
+
+  const lastGad = grouped.gad7[grouped.gad7.length - 1];
+  const lastPhq = grouped.phq9[grouped.phq9.length - 1];
+
+  if (elements.statsLastGad7) {
+    elements.statsLastGad7.textContent = lastGad ? formatResultSummary(lastGad) : 'Aún no has completado un GAD-7.';
+  }
+  if (elements.statsLastPhq9) {
+    elements.statsLastPhq9.textContent = lastPhq ? formatResultSummary(lastPhq) : 'Aún no has completado un PHQ-9.';
+  }
+
+  const recent = normalized.slice(-10);
+  const labels = recent.map(item => new Intl.DateTimeFormat('es-ES', { day: '2-digit', month: 'short' }).format(item.date));
+  const gadTrend = recent.map(item => item.typeKey === 'gad7' ? item.total : null);
+  const phqTrend = recent.map(item => item.typeKey === 'phq9' ? item.total : null);
+  const hasTrendData = gadTrend.some(value => typeof value === 'number')
+    || phqTrend.some(value => typeof value === 'number');
+  if (hasTrendData) {
+    updateTrendChart(labels, gadTrend, phqTrend);
+  } else if (statsCharts.trend) {
+    statsCharts.trend.destroy();
+    statsCharts.trend = null;
+  }
+
+  const severityLabels = Array.from(severityCounts.keys()).sort(sortBySeverity);
+  const severityValues = severityLabels.map(label => severityCounts.get(label));
+  const hasSeverityData = severityValues.some(value => typeof value === 'number' && value > 0);
+  if (hasSeverityData) {
+    updateSeverityChart(severityLabels, severityValues);
+  } else if (statsCharts.severity) {
+    statsCharts.severity.destroy();
+    statsCharts.severity = null;
+  }
+  toggleChartCards({ trend: hasTrendData, severity: hasSeverityData });
+  updateTrendChart(labels, gadTrend, phqTrend);
+
+  const severityLabels = Array.from(severityCounts.keys()).sort(sortBySeverity);
+  const severityValues = severityLabels.map(label => severityCounts.get(label));
+  updateSeverityChart(severityLabels, severityValues);
+  toggleChartCards(true);
+}
+
 function toggleHistory(show) {
   if (!elements.historyPanel) return;
   elements.historyPanel.classList.toggle('hidden', !show);
@@ -1034,7 +1251,12 @@ if (elements.btnOpenHistory) {
 }
 
 if (elements.btnCloseHistory) {
-  elements.btnCloseHistory.addEventListener('click', () => toggleHistory(false));
+  elements.btnCloseHistory.addEventListener('click', () => {
+    toggleHistory(false);
+    if (elements.btnOpenHistory && elements.btnOpenHistory.focus) {
+      elements.btnOpenHistory.focus();
+    }
+  });
 }
 
 if (elements.btnResultDashboard) {
@@ -1051,3 +1273,159 @@ if (elements.btnResultHistory) {
 }
 
 ensureAuth();
+
+/* ---------------------------
+   Help widget behavior (integración con app.js)
+   Número de crisis: 2331-7101
+   --------------------------- */
+(function () {
+  const CRISIS_NUMBER = '2331-7101';
+
+  const toggle = document.getElementById('help-toggle');
+  const panel = document.getElementById('help-panel');
+  const closeBtn = document.getElementById('help-close');
+  const modalCrisis = document.getElementById('modal-crisis');
+  const modalCrisisClose = document.getElementById('modal-crisis-close');
+  const copyNumberBtn = document.getElementById('copy-number');
+  const callLink = document.getElementById('call-link');
+  const crisisNumberEl = document.getElementById('crisis-number');
+
+  // Si el HTML del widget no está agregado al index, salimos silenciosamente
+  if (!toggle || !panel) return;
+
+  // Inicializar número y enlace si existen los elementos
+  if (crisisNumberEl) crisisNumberEl.textContent = CRISIS_NUMBER;
+  if (callLink) callLink.href = `tel:${CRISIS_NUMBER.replace(/\s+/g, '')}`;
+
+  function openPanel() {
+    panel.hidden = false;
+    toggle.setAttribute('aria-expanded', 'true');
+    const first = panel.querySelector('[role="menuitem"], .help-item, button');
+    if (first && typeof first.focus === 'function') first.focus();
+  }
+  function closePanel() {
+    panel.hidden = true;
+    toggle.setAttribute('aria-expanded', 'false');
+    if (typeof toggle.focus === 'function') toggle.focus();
+  }
+
+  // Toggle al pulsar el botón
+  toggle.addEventListener('click', (e) => {
+    const isOpen = panel && !panel.hidden;
+    if (isOpen) closePanel(); else openPanel();
+  });
+
+  if (closeBtn) closeBtn.addEventListener('click', closePanel);
+
+  // Cerrar si se hace click fuera del panel
+  document.addEventListener('click', (e) => {
+    if (!panel || panel.hidden) return;
+    const isInside = panel.contains(e.target) || toggle.contains(e.target);
+    if (!isInside) closePanel();
+  });
+
+  // Teclado: Esc cierra modal o panel
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      if (modalCrisis && !modalCrisis.hidden) {
+        closeModalCrisis();
+      } else if (!panel.hidden) {
+        closePanel();
+      }
+    }
+  });
+
+  // Delegación para pulsar items del panel
+  panel.addEventListener('click', (ev) => {
+    const btn = ev.target.closest('.help-item, [role="menuitem"], button');
+    if (!btn) return;
+    const target = btn.dataset.target;
+    const action = btn.dataset.action;
+
+    closePanel();
+
+    // Acción: abrir modal de crisis
+    if (action === 'crisis') {
+      openModalCrisis();
+      return;
+    }
+
+    // Acción: iniciar chat -> por ahora sólo muestra toast y navega si target existe
+    if (action === 'chat') {
+      const destino = document.querySelector('#statsSection') || document.querySelector('.app');
+      if (destino) destino.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      showToast('Chat de apoyo: componente no implementado.'); // usa showToast existente
+      return;
+    }
+
+    // Si tiene selector de target -> hacer scroll
+    if (target) {
+      try {
+        const el = document.querySelector(target);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          showToast('Abriendo sección solicitada.');
+        } else {
+          showToast('Sección no encontrada en la página.');
+        }
+      } catch (err) {
+        console.warn('Selector inválido:', target);
+        showToast('Error al navegar a la sección.');
+      }
+    }
+  });
+
+  // Modal crisis
+  function openModalCrisis() {
+    if (!modalCrisis) return;
+    modalCrisis.hidden = false;
+    const close = modalCrisis.querySelector('.modal-close, #modal-crisis-close');
+    if (close && typeof close.focus === 'function') close.focus();
+  }
+  function closeModalCrisis() {
+    if (!modalCrisis) return;
+    modalCrisis.hidden = true;
+    if (typeof toggle.focus === 'function') toggle.focus();
+  }
+  if (modalCrisisClose) modalCrisisClose.addEventListener('click', closeModalCrisis);
+  if (modalCrisis) {
+    modalCrisis.addEventListener('click', (e) => {
+      if (e.target === modalCrisis) closeModalCrisis();
+    });
+  }
+
+  // Copiar número al portapapeles con fallback
+  if (copyNumberBtn) {
+    copyNumberBtn.addEventListener('click', async () => {
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(CRISIS_NUMBER);
+          showToast('Número copiado al portapapeles');
+        } else {
+          // fallback: seleccionar texto y copiar con execCommand
+          const el = crisisNumberEl || document.createElement('span');
+          if (!crisisNumberEl) {
+            el.textContent = CRISIS_NUMBER;
+            el.style.position = 'fixed';
+            el.style.left = '-9999px';
+            document.body.appendChild(el);
+          }
+          const range = document.createRange();
+          range.selectNodeContents(el);
+          const sel = window.getSelection();
+          sel.removeAllRanges();
+          sel.addRange(range);
+          document.execCommand('copy');
+          sel.removeAllRanges();
+          if (!crisisNumberEl) el.remove();
+          showToast('Número copiado (método alternativo).');
+        }
+      } catch (err) {
+        console.error('Error copiando número:', err);
+        showToast('No se pudo copiar el número. Copia manualmente.');
+      }
+    });
+  }
+
+  // Si el navegador no soporta clipboard, dejamos botón visible (fallback arriba cubrirá)
+})();

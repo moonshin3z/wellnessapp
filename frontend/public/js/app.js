@@ -31,14 +31,33 @@ const elements = {
   resultTitle: document.getElementById('resultTitle'),
   resultSummary: document.getElementById('resultSummary'),
   resultDetails: document.getElementById('resultDetails'),
+  resultAnalytics: document.getElementById('resultAnalytics'),
+  resultAnswersChart: document.getElementById('resultAnswersChart'),
+  resultAverage: document.getElementById('resultAverage'),
+  resultMax: document.getElementById('resultMax'),
+  resultFocus: document.getElementById('resultFocus'),
   btnResultDashboard: document.getElementById('btnResultDashboard'),
   btnResultHistory: document.getElementById('btnResultHistory'),
+  insightsPanel: document.getElementById('insightsPanel'),
+  cardGad7: document.getElementById('cardGad7'),
+  cardPhq9: document.getElementById('cardPhq9'),
+  chartGad7: document.getElementById('chartGad7'),
+  chartPhq9: document.getElementById('chartPhq9'),
+  gadCount: document.getElementById('gadCount'),
+  gadAverage: document.getElementById('gadAverage'),
+  gadTrend: document.getElementById('gadTrend'),
+  gadLast: document.getElementById('gadLast'),
+  phqCount: document.getElementById('phqCount'),
+  phqAverage: document.getElementById('phqAverage'),
+  phqTrend: document.getElementById('phqTrend'),
+  phqLast: document.getElementById('phqLast'),
   toast: document.getElementById('toast'),
 };
 
 let currentUser = null;
 let currentAssessment = null;
 let lastResultType = null;
+let cachedHistory = [];
 
 // --- Utility helpers ---
 function showView(id) {
@@ -110,8 +129,11 @@ function ensureAuth() {
     currentUser = profile;
     updateDashboard();
     showView('view-dashboard');
+    loadHistory();
   } else {
     showView('view-login');
+    cachedHistory = [];
+    renderInsights([]);
   }
 }
 
@@ -331,7 +353,8 @@ async function submitAssessment() {
       ? await apiPhq9(payload)
       : await apiGad7(payload);
     lastResultType = type;
-    showResult(response, type);
+    showResult(response, type, payload.slice());
+    currentAssessment = null;
     await loadHistory();
   } catch (error) {
     console.error(error);
@@ -345,7 +368,7 @@ async function submitAssessment() {
   }
 }
 
-function showResult(result, type) {
+function showResult(result, type, answers) {
   showView('view-result');
   const isPhq = type === 'phq9';
   elements.resultTitle.textContent = isPhq ? 'Resultados PHQ-9' : 'Resultados GAD-7';
@@ -363,6 +386,8 @@ function showResult(result, type) {
     li.textContent = text;
     elements.resultDetails.append(li);
   });
+
+  renderResultAnalytics(type, answers);
 }
 
 function goToDashboard() {
@@ -374,7 +399,9 @@ async function loadHistory() {
   if (!currentUser) return;
   try {
     const items = await apiHistory();
-    renderHistory(items);
+    cachedHistory = Array.isArray(items) ? items : [];
+    renderHistory(cachedHistory);
+    renderInsights(cachedHistory);
   } catch (error) {
     console.error(error);
     showToast('No se pudo cargar el historial.');
@@ -402,6 +429,229 @@ function renderHistory(items) {
   });
 }
 
+function normalizeAssessmentType(value) {
+  const type = String(value || '').toLowerCase();
+  if (type.includes('phq')) return 'phq9';
+  if (type.includes('gad')) return 'gad7';
+  return null;
+}
+
+function formatInsightDate(dateString) {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  if (Number.isNaN(date.getTime())) return '';
+  const formatter = new Intl.DateTimeFormat('es-ES', {
+    day: 'numeric',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+  return formatter.format(date);
+}
+
+function capitalize(text) {
+  if (!text) return '';
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+function formatTrend(change) {
+  if (change > 0) {
+    return `↑ +${change} pts (subió)`;
+  }
+  if (change < 0) {
+    return `↓ ${Math.abs(change)} pts (mejoró)`;
+  }
+  return '→ Sin cambios';
+}
+
+function drawLineChart(svg, values, options = {}) {
+  if (!svg) return;
+  while (svg.firstChild) {
+    svg.removeChild(svg.firstChild);
+  }
+  if (!values || !values.length) {
+    return;
+  }
+
+  const ns = 'http://www.w3.org/2000/svg';
+  const height = 40;
+  const width = 100;
+  const max = options.max || Math.max(...values, 1);
+  const clampedValues = values.map(v => Math.max(0, Number(v) || 0));
+  const step = clampedValues.length > 1 ? width / (clampedValues.length - 1) : 0;
+  const points = clampedValues.map((value, index) => {
+    const x = clampedValues.length > 1 ? index * step : width / 2;
+    const y = height - (value / max) * height;
+    return { x: Number(x.toFixed(2)), y: Number(y.toFixed(2)) };
+  });
+
+  const gridLines = options.gridLines || 4;
+  for (let i = 1; i < gridLines; i += 1) {
+    const line = document.createElementNS(ns, 'line');
+    const posY = (height / gridLines) * i;
+    line.setAttribute('x1', '0');
+    line.setAttribute('y1', posY);
+    line.setAttribute('x2', width);
+    line.setAttribute('y2', posY);
+    svg.appendChild(line);
+  }
+
+  const area = document.createElementNS(ns, 'polygon');
+  const areaPoints = points.length > 1
+    ? [[points[0].x, height], ...points.map(p => [p.x, p.y]), [points[points.length - 1].x, height]]
+    : [[0, height], [points[0].x, points[0].y], [width, height]];
+  area.setAttribute('points', areaPoints.map(p => `${p[0]},${p[1]}`).join(' '));
+  svg.appendChild(area);
+
+  const polyline = document.createElementNS(ns, 'polyline');
+  polyline.setAttribute('points', points.map(p => `${p.x},${p.y}`).join(' '));
+  svg.appendChild(polyline);
+
+  points.forEach(point => {
+    const circle = document.createElementNS(ns, 'circle');
+    circle.setAttribute('cx', point.x);
+    circle.setAttribute('cy', point.y);
+    circle.setAttribute('r', 1.8);
+    svg.appendChild(circle);
+  });
+}
+
+function renderInsightCard(key, data) {
+  const isGad = key === 'gad7';
+  const card = isGad ? elements.cardGad7 : elements.cardPhq9;
+  const chart = isGad ? elements.chartGad7 : elements.chartPhq9;
+  const countEl = isGad ? elements.gadCount : elements.phqCount;
+  const averageEl = isGad ? elements.gadAverage : elements.phqAverage;
+  const trendEl = isGad ? elements.gadTrend : elements.phqTrend;
+  const lastEl = isGad ? elements.gadLast : elements.phqLast;
+  if (!card) return;
+
+  if (!data || !data.length) {
+    card.classList.add('insight-card--empty');
+    if (chart) chart.innerHTML = '';
+    if (countEl) countEl.textContent = '0';
+    if (averageEl) averageEl.textContent = '0';
+    if (trendEl) trendEl.textContent = '—';
+    if (lastEl) lastEl.textContent = isGad
+      ? 'Cuando completes evaluaciones verás aquí el detalle más reciente.'
+      : 'Tus resultados más recientes aparecerán aquí al completar evaluaciones.';
+    return;
+  }
+
+  card.classList.remove('insight-card--empty');
+  const sorted = data.slice().sort((a, b) => {
+    const dateA = new Date(a.createdAt || a.date || 0).getTime();
+    const dateB = new Date(b.createdAt || b.date || 0).getTime();
+    return dateA - dateB;
+  });
+  const totalCount = sorted.length;
+  const chartValues = sorted.slice(-8).map(item => Number(item.total) || 0);
+  const sumTotals = sorted.reduce((acc, value) => acc + (Number(value.total) || 0), 0);
+  const average = sumTotals / sorted.length;
+  const last = sorted[sorted.length - 1];
+  const previous = sorted.length > 1 ? sorted[sorted.length - 2] : null;
+  const change = previous ? (Number(last.total) || 0) - (Number(previous.total) || 0) : 0;
+
+  if (chart) {
+    drawLineChart(chart, chartValues, { max: isGad ? 21 : 27 });
+  }
+  if (countEl) {
+    countEl.textContent = String(totalCount);
+  }
+  if (averageEl) {
+    averageEl.textContent = average.toFixed(1);
+  }
+  if (trendEl) {
+    trendEl.textContent = totalCount > 1 ? formatTrend(Math.round(change)) : '→ Sin cambios';
+  }
+  if (lastEl) {
+    const category = capitalize(last.category || '');
+    const dateText = formatInsightDate(last.createdAt || last.date);
+    const pieces = [`Último: ${last.total}`];
+    if (category) pieces.push(`(${category})`);
+    if (dateText) pieces.push(`· ${dateText}`);
+    lastEl.textContent = pieces.join(' ');
+  }
+}
+
+function renderInsights(items = []) {
+  if (!elements.insightsPanel) return;
+  const grouped = { gad7: [], phq9: [] };
+  items.forEach(item => {
+    const normalized = normalizeAssessmentType(item.type);
+    if (!normalized) return;
+    grouped[normalized].push({
+      total: Number(item.total) || 0,
+      category: item.category,
+      createdAt: item.createdAt
+    });
+  });
+  renderInsightCard('gad7', grouped.gad7);
+  renderInsightCard('phq9', grouped.phq9);
+}
+
+function getQuestionSetForType(type) {
+  return type === 'phq9' ? PHQ9_QUESTIONS : GAD7_QUESTIONS;
+}
+
+function formatFocusAreas(titles) {
+  if (!titles.length) return 'Sin dificultades marcadas';
+  if (titles.length === 1) return titles[0];
+  if (titles.length === 2) return `${titles[0]} y ${titles[1]}`;
+  return `${titles.slice(0, 2).join(', ')} y más`;
+}
+
+function renderResultAnalytics(type, answers = []) {
+  if (!elements.resultAnswersChart) return;
+  const container = elements.resultAnswersChart;
+  container.innerHTML = '';
+
+  const values = Array.isArray(answers) ? answers.map(v => Math.max(0, Number(v) || 0)) : [];
+  const questions = getQuestionSetForType(type) || [];
+  const maxScore = 3;
+
+  if (!values.length) {
+    if (elements.resultAverage) elements.resultAverage.textContent = '—';
+    if (elements.resultMax) elements.resultMax.textContent = '—';
+    if (elements.resultFocus) elements.resultFocus.textContent = '—';
+    return;
+  }
+
+  const maxValue = Math.max(...values);
+  const focusTitles = values
+    .map((value, index) => ({ value, index }))
+    .filter(item => item.value === maxValue && item.value > 0)
+    .map(item => questions[item.index]?.title || `Pregunta ${item.index + 1}`);
+
+  values.forEach((value, index) => {
+    const bar = document.createElement('div');
+    bar.className = 'result-bar';
+    const height = value > 0 ? (value / maxScore) * 100 : 6;
+    bar.style.height = `${Math.min(100, Math.max(6, height))}%`;
+    bar.setAttribute('data-value', value);
+    bar.title = questions[index]?.title || `Pregunta ${index + 1}`;
+    if (value === maxValue && maxValue > 0) {
+      bar.classList.add('result-bar--highlight');
+    }
+    const label = document.createElement('div');
+    label.className = 'result-bar-label';
+    label.textContent = `P${index + 1}`;
+    bar.append(label);
+    container.append(bar);
+  });
+
+  const average = values.reduce((acc, value) => acc + value, 0) / values.length;
+  if (elements.resultAverage) {
+    elements.resultAverage.textContent = `${average.toFixed(2)} pts`;
+  }
+  if (elements.resultMax) {
+    elements.resultMax.textContent = `${maxValue} / ${maxScore} pts`;
+  }
+  if (elements.resultFocus) {
+    elements.resultFocus.textContent = formatFocusAreas(focusTitles);
+  }
+}
+
 function toggleHistory(show) {
   if (!elements.historyPanel) return;
   elements.historyPanel.classList.toggle('hidden', !show);
@@ -426,6 +676,7 @@ if (elements.loginForm) {
       updateDashboard();
       showToast('¡Bienvenido de vuelta!');
       showView('view-dashboard');
+      loadHistory();
       elements.loginForm.reset();
       setStatus(elements.loginStatus, '', null);
     } catch (error) {
@@ -483,6 +734,8 @@ if (elements.btnLogout) {
     clearToken();
     clearProfile();
     currentUser = null;
+    cachedHistory = [];
+    renderInsights([]);
     toggleHistory(false);
     showView('view-login');
     showToast('Sesión cerrada.');

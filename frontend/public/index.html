@@ -100,6 +100,66 @@
         <div class="hero-illustration" aria-hidden="true">💫</div>
       </section>
 
+      <section class="insights" id="insightsPanel">
+        <article class="insight-card insight-card--empty" id="cardGad7">
+          <header class="insight-head">
+            <div>
+              <h3>Seguimiento GAD-7</h3>
+              <p class="insight-subtitle">Niveles de ansiedad en el tiempo</p>
+            </div>
+            <span class="insight-badge">Ansiedad</span>
+          </header>
+          <div class="insight-body">
+            <svg id="chartGad7" class="insight-chart" viewBox="0 0 100 40" preserveAspectRatio="none" role="img" aria-label="Evolución de puntajes GAD-7"></svg>
+            <div class="insight-empty">Aún no tienes resultados registrados.</div>
+            <dl class="insight-stats">
+              <div>
+                <dt>Evaluaciones</dt>
+                <dd id="gadCount">0</dd>
+              </div>
+              <div>
+                <dt>Promedio</dt>
+                <dd id="gadAverage">0</dd>
+              </div>
+              <div>
+                <dt>Tendencia</dt>
+                <dd id="gadTrend">—</dd>
+              </div>
+            </dl>
+            <p class="insight-last" id="gadLast">Cuando completes evaluaciones verás aquí el detalle más reciente.</p>
+          </div>
+        </article>
+
+        <article class="insight-card insight-card--empty" id="cardPhq9">
+          <header class="insight-head">
+            <div>
+              <h3>Seguimiento PHQ-9</h3>
+              <p class="insight-subtitle">Indicadores de estado de ánimo</p>
+            </div>
+            <span class="insight-badge">Ánimo</span>
+          </header>
+          <div class="insight-body">
+            <svg id="chartPhq9" class="insight-chart" viewBox="0 0 100 40" preserveAspectRatio="none" role="img" aria-label="Evolución de puntajes PHQ-9"></svg>
+            <div class="insight-empty">Registra tus primeros resultados para ver tu progreso.</div>
+            <dl class="insight-stats">
+              <div>
+                <dt>Evaluaciones</dt>
+                <dd id="phqCount">0</dd>
+              </div>
+              <div>
+                <dt>Promedio</dt>
+                <dd id="phqAverage">0</dd>
+              </div>
+              <div>
+                <dt>Tendencia</dt>
+                <dd id="phqTrend">—</dd>
+              </div>
+            </dl>
+            <p class="insight-last" id="phqLast">Tus resultados más recientes aparecerán aquí al completar evaluaciones.</p>
+          </div>
+        </article>
+      </section>
+
       <section class="quick-links">
         <article class="quick-card">
           <div class="quick-icon">☁️</div>
@@ -169,6 +229,35 @@
         <h2 id="resultTitle">¡Bien hecho!</h2>
         <p id="resultSummary" class="result-summary"></p>
         <ul id="resultDetails" class="result-details"></ul>
+        <section class="result-analytics" id="resultAnalytics">
+          <div class="result-chart-panel">
+            <h3>Tus respuestas</h3>
+            <div class="result-chart" id="resultAnswersChart" aria-live="polite"></div>
+            <div class="result-chart-scale" aria-hidden="true">
+              <span>0</span>
+              <span>1</span>
+              <span>2</span>
+              <span>3</span>
+            </div>
+          </div>
+          <div class="result-stats-panel">
+            <h3>Estadísticas clave</h3>
+            <ul class="result-stats">
+              <li>
+                <span>Puntaje promedio por pregunta</span>
+                <strong id="resultAverage">-</strong>
+              </li>
+              <li>
+                <span>Respuesta más alta</span>
+                <strong id="resultMax">-</strong>
+              </li>
+              <li>
+                <span>Áreas a trabajar</span>
+                <strong id="resultFocus">-</strong>
+              </li>
+            </ul>
+          </div>
+        </section>
         <div class="result-actions">
           <button class="btn btn--primary" id="btnResultDashboard">Volver al inicio</button>
           <button class="btn btn--light" id="btnResultHistory">Ver historial</button>

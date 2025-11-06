@@ -34,27 +34,182 @@ const elements = {
   btnResultDashboard: document.getElementById('btnResultDashboard'),
   btnResultHistory: document.getElementById('btnResultHistory'),
   toast: document.getElementById('toast'),
-  statsSection: document.getElementById('statsSection'),
-  statsEmpty: document.getElementById('statsEmpty'),
-  statsTotalEvaluations: document.getElementById('statsTotalEvaluations'),
-  statsAverageGad7: document.getElementById('statsAverageGad7'),
-  statsAveragePhq9: document.getElementById('statsAveragePhq9'),
-  statsLastGad7: document.getElementById('statsLastGad7'),
-  statsLastPhq9: document.getElementById('statsLastPhq9'),
-  statsTrend: document.getElementById('statsTrend'),
-  statsSeverity: document.getElementById('statsSeverity'),
-  statsTrendEmpty: document.querySelector('[data-chart-empty="trend"]'),
-  statsSeverityEmpty: document.querySelector('[data-chart-empty="severity"]'),
 };
+
+if (elements.historyPanel) {
+  elements.historyPanel.setAttribute('aria-hidden', elements.historyPanel.classList.contains('hidden') ? 'true' : 'false');
+  elements.historyPanel.setAttribute('tabindex', '-1');
+}
+
+if (elements.btnOpenHistory) {
+  elements.btnOpenHistory.setAttribute('aria-controls', 'historyPanel');
+  elements.btnOpenHistory.setAttribute('aria-expanded', 'false');
+}
 
 let currentUser = null;
 let currentAssessment = null;
 let lastResultType = null;
 
+const statsElements = {
+  section: null,
+  empty: null,
+  total: null,
+  averageGad7: null,
+  averagePhq9: null,
+  lastGad7: null,
+  lastPhq9: null,
+  trend: null,
+  severity: null,
+  trendEmpty: null,
+  severityEmpty: null,
+};
+
 const statsCharts = {
   trend: null,
-  severity: null
+  severity: null,
 };
+
+const chartColors = {
+  gad7: '#5d5fef',
+  phq9: '#ff8ec5',
+};
+
+const severityOrder = [
+  'Sin síntomas',
+  'Mínimo',
+  'Leve',
+  'Moderado',
+  'Moderadamente severo',
+  'Grave',
+  'Severo',
+];
+
+const CHART_JS_CDN = {
+  src: 'https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js',
+  integrity: 'sha384-9nhczxUqK87bcKHh20fSQcTGD4qq5GhayNYSYWqwBkINBhOfQLg/P5HG5lF1urn4',
+};
+
+let chartJsPromise = null;
+
+function ensureStatsSection() {
+  if (statsElements.section && document.body.contains(statsElements.section)) {
+    return statsElements.section;
+  }
+
+  const existing = document.getElementById('statsSection');
+  if (existing) {
+    hydrateStatsElements(existing);
+    return existing;
+  }
+
+  const dashboard = document.getElementById('view-dashboard');
+  if (!dashboard) {
+    return null;
+  }
+
+  const section = document.createElement('section');
+  section.id = 'statsSection';
+  section.className = 'insights insights--empty';
+  section.setAttribute('aria-live', 'polite');
+  section.innerHTML = `
+    <div class="insights-header">
+      <h3>Estadísticas de tus evaluaciones</h3>
+      <p>Consulta tu progreso y las tendencias recientes de tus resultados.</p>
+    </div>
+    <div id="statsEmpty" class="stats-empty">Aún no hay suficientes evaluaciones para mostrar estadísticas.</div>
+    <div class="insights-grid">
+      <article class="stats-card">
+        <h4>Total de evaluaciones</h4>
+        <p id="statsTotalEvaluations" class="stats-value">0</p>
+        <span class="stats-label">Se cuentan todas las evaluaciones guardadas.</span>
+      </article>
+      <article class="stats-card">
+        <h4>Promedio GAD-7</h4>
+        <p id="statsAverageGad7" class="stats-value">–</p>
+        <span class="stats-label">Suma de puntajes ÷ número de pruebas GAD-7.</span>
+      </article>
+      <article class="stats-card">
+        <h4>Promedio PHQ-9</h4>
+        <p id="statsAveragePhq9" class="stats-value">–</p>
+        <span class="stats-label">Suma de puntajes ÷ número de pruebas PHQ-9.</span>
+      </article>
+    </div>
+    <div class="latest-grid">
+      <article class="latest-card">
+        <h4>Último resultado GAD-7</h4>
+        <p id="statsLastGad7" class="latest-value">Aún no has completado un GAD-7.</p>
+      </article>
+      <article class="latest-card">
+        <h4>Último resultado PHQ-9</h4>
+        <p id="statsLastPhq9" class="latest-value">Aún no has completado un PHQ-9.</p>
+      </article>
+    </div>
+    <div class="charts-grid">
+      <article class="chart-card is-empty">
+        <header>
+          <h4>Evolución de puntajes</h4>
+          <span>Últimas evaluaciones</span>
+        </header>
+        <canvas id="statsTrend" aria-label="Gráfico de línea con la evolución de puntajes" role="img"></canvas>
+        <p class="chart-empty" data-chart-empty="trend">Completa algunas evaluaciones para ver la evolución de tus resultados.</p>
+      </article>
+      <article class="chart-card is-empty">
+        <header>
+          <h4>Distribución por categoría</h4>
+          <span>Conteo de evaluaciones por nivel</span>
+        </header>
+        <canvas id="statsSeverity" aria-label="Gráfico de barras con la distribución por categoría" role="img"></canvas>
+        <p class="chart-empty" data-chart-empty="severity">Cuando tengas evaluaciones guardadas verás aquí la distribución por niveles.</p>
+      </article>
+    </div>
+  `;
+
+  const historyPanel = dashboard.querySelector('#historyPanel');
+  if (historyPanel && historyPanel.parentElement === dashboard) {
+    dashboard.insertBefore(section, historyPanel);
+  } else {
+    dashboard.append(section);
+  }
+
+  hydrateStatsElements(section);
+  return section;
+}
+
+function hydrateStatsElements(section) {
+  statsElements.section = section;
+  statsElements.empty = section.querySelector('#statsEmpty');
+  statsElements.total = section.querySelector('#statsTotalEvaluations');
+  statsElements.averageGad7 = section.querySelector('#statsAverageGad7');
+  statsElements.averagePhq9 = section.querySelector('#statsAveragePhq9');
+  statsElements.lastGad7 = section.querySelector('#statsLastGad7');
+  statsElements.lastPhq9 = section.querySelector('#statsLastPhq9');
+  statsElements.trend = section.querySelector('#statsTrend');
+  statsElements.severity = section.querySelector('#statsSeverity');
+  statsElements.trendEmpty = section.querySelector('[data-chart-empty="trend"]');
+  statsElements.severityEmpty = section.querySelector('[data-chart-empty="severity"]');
+}
+
+function ensureChartJs() {
+  if (typeof Chart !== 'undefined') {
+    return Promise.resolve();
+  }
+  if (chartJsPromise) {
+    return chartJsPromise;
+  }
+  chartJsPromise = new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = CHART_JS_CDN.src;
+    script.integrity = CHART_JS_CDN.integrity;
+    script.crossOrigin = 'anonymous';
+    script.addEventListener('load', () => resolve());
+    script.addEventListener('error', () => {
+      chartJsPromise = null;
+      reject(new Error('No se pudo cargar Chart.js'));
+    });
+    document.head.append(script);
+  });
+  return chartJsPromise;
+}
 
 function normalizeHistoryResponse(data) {
   if (Array.isArray(data)) {
@@ -86,15 +241,12 @@ function destroyStatsCharts() {
 
 function toggleChartCards(state) {
   const resolved = (typeof state === 'object' && state !== null)
-    ? {
-        trend: Boolean(state.trend),
-        severity: Boolean(state.severity)
-      }
+    ? { trend: Boolean(state.trend), severity: Boolean(state.severity) }
     : { trend: Boolean(state), severity: Boolean(state) };
 
   const chartPairs = [
-    { key: 'trend', canvas: elements.statsTrend, empty: elements.statsTrendEmpty },
-    { key: 'severity', canvas: elements.statsSeverity, empty: elements.statsSeverityEmpty }
+    { key: 'trend', canvas: statsElements.trend, empty: statsElements.trendEmpty },
+    { key: 'severity', canvas: statsElements.severity, empty: statsElements.severityEmpty },
   ];
 
   chartPairs.forEach(({ key, canvas, empty }) => {
@@ -110,14 +262,236 @@ function toggleChartCards(state) {
   });
 }
 
-const chartColors = {
-  gad7: '#5d5fef',
-  phq9: '#ff8ec5'
-};
+function normalizeType(type) {
+  const text = (type || '').toLowerCase();
+  if (text.includes('phq')) return 'phq9';
+  return 'gad7';
+}
 
-const severityOrder = [
-  'Sin síntomas', 'Mínimo', 'Leve', 'Moderado', 'Moderadamente severo', 'Grave', 'Severo'
-];
+function formatResultSummary(item) {
+  if (!item) return '';
+  const date = new Date(item.createdAt);
+  const dateText = Number.isNaN(date.getTime())
+    ? ''
+    : new Intl.DateTimeFormat('es-ES', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }).format(date);
+  const categoryText = item.category ? ` · ${item.category}` : '';
+  return `${item.total} puntos${categoryText}${dateText ? ` · ${dateText}` : ''}`;
+}
+
+function sortBySeverity(a, b) {
+  const idxA = severityOrder.indexOf(a);
+  const idxB = severityOrder.indexOf(b);
+  const safeA = idxA === -1 ? Number.MAX_SAFE_INTEGER : idxA;
+  const safeB = idxB === -1 ? Number.MAX_SAFE_INTEGER : idxB;
+  if (safeA === safeB) return a.localeCompare(b, 'es');
+  return safeA - safeB;
+}
+
+function resetStats() {
+  const section = ensureStatsSection();
+  if (!section) return;
+  section.classList.add('insights--empty');
+  if (statsElements.empty) {
+    statsElements.empty.classList.remove('is-hidden');
+  }
+  if (statsElements.total) statsElements.total.textContent = '0';
+  if (statsElements.averageGad7) statsElements.averageGad7.textContent = '–';
+  if (statsElements.averagePhq9) statsElements.averagePhq9.textContent = '–';
+  if (statsElements.lastGad7) statsElements.lastGad7.textContent = 'Aún no has completado un GAD-7.';
+  if (statsElements.lastPhq9) statsElements.lastPhq9.textContent = 'Aún no has completado un PHQ-9.';
+  destroyStatsCharts();
+  toggleChartCards({ trend: false, severity: false });
+}
+
+function updateTrendChart(labels, gadData, phqData) {
+  if (!statsElements.trend || typeof Chart === 'undefined') return;
+  const datasets = [];
+  if (gadData.some(value => typeof value === 'number')) {
+    datasets.push({
+      label: 'GAD-7',
+      data: gadData,
+      borderColor: chartColors.gad7,
+      backgroundColor: chartColors.gad7,
+      tension: 0.35,
+      spanGaps: true,
+      pointRadius: 4,
+      pointBackgroundColor: '#fff',
+      pointBorderWidth: 2,
+    });
+  }
+  if (phqData.some(value => typeof value === 'number')) {
+    datasets.push({
+      label: 'PHQ-9',
+      data: phqData,
+      borderColor: chartColors.phq9,
+      backgroundColor: chartColors.phq9,
+      tension: 0.35,
+      spanGaps: true,
+      pointRadius: 4,
+      pointBackgroundColor: '#fff',
+      pointBorderWidth: 2,
+    });
+  }
+
+  if (!statsCharts.trend) {
+    statsCharts.trend = new Chart(statsElements.trend, {
+      type: 'line',
+      data: { labels, datasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: { precision: 0 },
+          },
+        },
+      },
+    });
+  } else {
+    statsCharts.trend.data.labels = labels;
+    statsCharts.trend.data.datasets = datasets;
+    statsCharts.trend.update();
+  }
+}
+
+function updateSeverityChart(labels, values) {
+  if (!statsElements.severity || typeof Chart === 'undefined') return;
+  const colors = labels.map((_, index) => index % 2 === 0
+    ? 'rgba(93, 95, 239, 0.65)'
+    : 'rgba(255, 142, 197, 0.65)');
+
+  if (!statsCharts.severity) {
+    statsCharts.severity = new Chart(statsElements.severity, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Evaluaciones',
+          data: values,
+          backgroundColor: colors,
+          borderRadius: 6,
+        }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: { precision: 0 },
+          },
+        },
+      },
+    });
+  } else {
+    statsCharts.severity.data.labels = labels;
+    statsCharts.severity.data.datasets[0].data = values;
+    statsCharts.severity.data.datasets[0].backgroundColor = colors;
+    statsCharts.severity.update();
+  }
+}
+
+async function renderStats(items) {
+  const section = ensureStatsSection();
+  if (!section) return;
+  const normalizedItems = normalizeHistoryResponse(items);
+  const hasData = normalizedItems.length > 0;
+  section.classList.toggle('insights--empty', !hasData);
+  if (statsElements.empty) {
+    statsElements.empty.classList.toggle('is-hidden', hasData);
+  }
+
+  if (!hasData) {
+    resetStats();
+    return;
+  }
+
+  if (statsElements.total) {
+    statsElements.total.textContent = `${normalizedItems.length}`;
+  }
+
+  const normalized = normalizedItems
+    .map(item => ({
+      ...item,
+      total: Number.isFinite(Number(item.total)) ? Number(item.total) : 0,
+      createdAt: item.createdAt,
+      date: new Date(item.createdAt),
+      typeKey: normalizeType(item.type),
+    }))
+    .filter(item => !Number.isNaN(item.date.getTime()))
+    .sort((a, b) => a.date - b.date);
+
+  const grouped = { gad7: [], phq9: [] };
+  const severityCounts = new Map();
+
+  normalized.forEach(item => {
+    grouped[item.typeKey].push(item);
+    const label = (item.category || 'Sin categoría').trim();
+    severityCounts.set(label, (severityCounts.get(label) || 0) + 1);
+  });
+
+  const average = (arr) => (arr.length ? arr.reduce((sum, entry) => sum + entry.total, 0) / arr.length : null);
+  const avgGad = average(grouped.gad7);
+  const avgPhq = average(grouped.phq9);
+
+  if (statsElements.averageGad7) {
+    statsElements.averageGad7.textContent = (avgGad !== null) ? `${avgGad.toFixed(1)} pts` : 'Sin datos';
+  }
+  if (statsElements.averagePhq9) {
+    statsElements.averagePhq9.textContent = (avgPhq !== null) ? `${avgPhq.toFixed(1)} pts` : 'Sin datos';
+  }
+
+  const lastGad = grouped.gad7[grouped.gad7.length - 1];
+  const lastPhq = grouped.phq9[grouped.phq9.length - 1];
+
+  if (statsElements.lastGad7) {
+    statsElements.lastGad7.textContent = lastGad ? formatResultSummary(lastGad) : 'Aún no has completado un GAD-7.';
+  }
+  if (statsElements.lastPhq9) {
+    statsElements.lastPhq9.textContent = lastPhq ? formatResultSummary(lastPhq) : 'Aún no has completado un PHQ-9.';
+  }
+
+  const recent = normalized.slice(-10);
+  const labels = recent.map(item => new Intl.DateTimeFormat('es-ES', { day: '2-digit', month: 'short' }).format(item.date));
+  const gadTrend = recent.map(item => (item.typeKey === 'gad7' ? item.total : null));
+  const phqTrend = recent.map(item => (item.typeKey === 'phq9' ? item.total : null));
+
+  const severityLabels = Array.from(severityCounts.keys()).sort(sortBySeverity);
+  const severityValues = severityLabels.map(label => severityCounts.get(label));
+
+  const hasTrendData = gadTrend.some(value => typeof value === 'number')
+    || phqTrend.some(value => typeof value === 'number');
+  const hasSeverityData = severityValues.some(value => typeof value === 'number' && value > 0);
+
+  if (hasTrendData || hasSeverityData) {
+    try {
+      await ensureChartJs();
+    } catch (error) {
+      console.error(error);
+      destroyStatsCharts();
+      toggleChartCards({ trend: false, severity: false });
+      return;
+    }
+  }
+
+  if (hasTrendData) {
+    updateTrendChart(labels, gadTrend, phqTrend);
+  } else if (statsCharts.trend) {
+    statsCharts.trend.destroy();
+    statsCharts.trend = null;
+  }
+
+  if (hasSeverityData) {
+    updateSeverityChart(severityLabels, severityValues);
+  } else if (statsCharts.severity) {
+    statsCharts.severity.destroy();
+    statsCharts.severity = null;
+  }
+
+  toggleChartCards({ trend: hasTrendData, severity: hasSeverityData });
+}
 
 // --- Utility helpers ---
 function showView(id) {
@@ -183,6 +557,7 @@ function formatToday() {
 }
 
 function ensureAuth() {
+  ensureStatsSection();
   const token = getToken();
   const profile = loadStoredProfile();
   if (token && profile) {
@@ -191,8 +566,9 @@ function ensureAuth() {
     showView('view-dashboard');
     loadHistory();
   } else {
+    currentUser = null;
     showView('view-login');
-    renderStats([]);
+    resetStats();
   }
 }
 
@@ -452,16 +828,21 @@ function goToDashboard() {
 }
 
 async function loadHistory() {
-  if (!currentUser) return;
+  if (!currentUser) {
+    resetStats();
+    return [];
+  }
   try {
     const response = await apiHistory();
     const items = normalizeHistoryResponse(response);
     renderHistory(items);
-    renderStats(items);
+    await renderStats(items);
     return items;
   } catch (error) {
     console.error(error);
     showToast('No se pudo cargar el historial.');
+    resetStats();
+    return [];
   }
 }
 
@@ -487,215 +868,20 @@ function renderHistory(items) {
   });
 }
 
-function normalizeType(type) {
-  const text = (type || '').toLowerCase();
-  if (text.includes('phq')) return 'phq9';
-  return 'gad7';
-}
-
-function formatResultSummary(item) {
-  if (!item) return '';
-  const date = new Date(item.createdAt);
-  const dateText = isNaN(date.getTime())
-    ? ''
-    : new Intl.DateTimeFormat('es-ES', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }).format(date);
-  const categoryText = item.category ? ` · ${item.category}` : '';
-  return `${item.total} puntos${categoryText}${dateText ? ` · ${dateText}` : ''}`;
-}
-
-function sortBySeverity(a, b) {
-  const idxA = severityOrder.indexOf(a);
-  const idxB = severityOrder.indexOf(b);
-  const safeA = idxA === -1 ? Number.MAX_SAFE_INTEGER : idxA;
-  const safeB = idxB === -1 ? Number.MAX_SAFE_INTEGER : idxB;
-  if (safeA === safeB) return a.localeCompare(b, 'es');
-  return safeA - safeB;
-}
-
-function updateTrendChart(labels, gadData, phqData) {
-  if (!elements.statsTrend || typeof Chart === 'undefined') return;
-  const datasets = [
-    {
-      label: 'GAD-7',
-      data: gadData,
-      borderColor: chartColors.gad7,
-      backgroundColor: chartColors.gad7,
-      tension: 0.35,
-      pointRadius: 4,
-      spanGaps: true
-    },
-    {
-      label: 'PHQ-9',
-      data: phqData,
-      borderColor: chartColors.phq9,
-      backgroundColor: chartColors.phq9,
-      tension: 0.35,
-      pointRadius: 4,
-      spanGaps: true
-    }
-  ];
-  if (!statsCharts.trend) {
-    statsCharts.trend = new Chart(elements.statsTrend, {
-      type: 'line',
-      data: { labels, datasets },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          y: {
-            beginAtZero: true,
-            ticks: { stepSize: 2 }
-          }
-        },
-        plugins: {
-          legend: { position: 'bottom', labels: { usePointStyle: true } },
-          tooltip: { mode: 'index', intersect: false }
-        }
-      }
-    });
-  } else {
-    statsCharts.trend.data.labels = labels;
-    statsCharts.trend.data.datasets[0].data = gadData;
-    statsCharts.trend.data.datasets[1].data = phqData;
-    statsCharts.trend.update();
-  }
-}
-
-function updateSeverityChart(labels, values) {
-  if (!elements.statsSeverity || typeof Chart === 'undefined') return;
-  const colors = labels.map((_, index) => index % 2 === 0 ? 'rgba(93, 95, 239, 0.65)' : 'rgba(255, 142, 197, 0.65)');
-  if (!statsCharts.severity) {
-    statsCharts.severity = new Chart(elements.statsSeverity, {
-      type: 'bar',
-      data: {
-        labels,
-        datasets: [{
-          label: 'Evaluaciones',
-          data: values,
-          backgroundColor: colors,
-          borderRadius: 6
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false }
-        },
-        scales: {
-          y: {
-            beginAtZero: true,
-            ticks: { precision: 0 }
-          }
-        }
-      }
-    });
-  } else {
-    statsCharts.severity.data.labels = labels;
-    statsCharts.severity.data.datasets[0].data = values;
-    statsCharts.severity.data.datasets[0].backgroundColor = colors;
-    statsCharts.severity.update();
-  }
-}
-
-function renderStats(items) {
-  if (!elements.statsSection) return;
-  const normalizedItems = normalizeHistoryResponse(items);
-  const hasData = normalizedItems.length > 0;
-  elements.statsSection.classList.toggle('insights--empty', !hasData);
-  if (elements.statsEmpty) {
-    elements.statsEmpty.classList.toggle('is-hidden', hasData);
-  }
-  toggleChartCards({ trend: false, severity: false });
-
-  if (!hasData) {
-    if (elements.statsTotalEvaluations) elements.statsTotalEvaluations.textContent = '0';
-    if (elements.statsAverageGad7) elements.statsAverageGad7.textContent = '–';
-    if (elements.statsAveragePhq9) elements.statsAveragePhq9.textContent = '–';
-    if (elements.statsLastGad7) elements.statsLastGad7.textContent = 'Aún no has completado un GAD-7.';
-    if (elements.statsLastPhq9) elements.statsLastPhq9.textContent = 'Aún no has completado un PHQ-9.';
-    destroyStatsCharts();
-    return;
-  }
-
-  if (elements.statsTotalEvaluations) {
-    elements.statsTotalEvaluations.textContent = `${normalizedItems.length}`;
-  }
-
-  const normalized = normalizedItems
-    .map(item => ({
-      ...item,
-      total: Number.isFinite(Number(item.total)) ? Number(item.total) : 0,
-      date: new Date(item.createdAt),
-      typeKey: normalizeType(item.type)
-    }))
-    .filter(item => !Number.isNaN(item.date.getTime()))
-    .sort((a, b) => a.date - b.date);
-
-  const grouped = { gad7: [], phq9: [] };
-  const severityCounts = new Map();
-
-  normalized.forEach(item => {
-    grouped[item.typeKey].push(item);
-    const label = (item.category || 'Sin categoría').trim();
-    severityCounts.set(label, (severityCounts.get(label) || 0) + 1);
-  });
-
-  const average = (arr) => arr.length ? (arr.reduce((sum, entry) => sum + entry.total, 0) / arr.length) : null;
-
-  const avgGad = average(grouped.gad7);
-  const avgPhq = average(grouped.phq9);
-
-  if (elements.statsAverageGad7) {
-    elements.statsAverageGad7.textContent = (avgGad !== null) ? `${avgGad.toFixed(1)} pts` : 'Sin datos';
-  }
-  if (elements.statsAveragePhq9) {
-    elements.statsAveragePhq9.textContent = (avgPhq !== null) ? `${avgPhq.toFixed(1)} pts` : 'Sin datos';
-  }
-
-  const lastGad = grouped.gad7[grouped.gad7.length - 1];
-  const lastPhq = grouped.phq9[grouped.phq9.length - 1];
-
-  if (elements.statsLastGad7) {
-    elements.statsLastGad7.textContent = lastGad ? formatResultSummary(lastGad) : 'Aún no has completado un GAD-7.';
-  }
-  if (elements.statsLastPhq9) {
-    elements.statsLastPhq9.textContent = lastPhq ? formatResultSummary(lastPhq) : 'Aún no has completado un PHQ-9.';
-  }
-
-  const recent = normalized.slice(-10);
-  const labels = recent.map(item => new Intl.DateTimeFormat('es-ES', { day: '2-digit', month: 'short' }).format(item.date));
-  const gadTrend = recent.map(item => item.typeKey === 'gad7' ? item.total : null);
-  const phqTrend = recent.map(item => item.typeKey === 'phq9' ? item.total : null);
-  const hasTrendData = gadTrend.some(value => typeof value === 'number')
-    || phqTrend.some(value => typeof value === 'number');
-  if (hasTrendData) {
-    updateTrendChart(labels, gadTrend, phqTrend);
-  } else if (statsCharts.trend) {
-    statsCharts.trend.destroy();
-    statsCharts.trend = null;
-  }
-
-  const severityLabels = Array.from(severityCounts.keys()).sort(sortBySeverity);
-  const severityValues = severityLabels.map(label => severityCounts.get(label));
-  const hasSeverityData = severityValues.some(value => typeof value === 'number' && value > 0);
-  if (hasSeverityData) {
-    updateSeverityChart(severityLabels, severityValues);
-  } else if (statsCharts.severity) {
-    statsCharts.severity.destroy();
-    statsCharts.severity = null;
-  }
-  toggleChartCards({ trend: hasTrendData, severity: hasSeverityData });
-}
-
 function toggleHistory(show) {
   if (!elements.historyPanel) return;
   elements.historyPanel.classList.toggle('hidden', !show);
   elements.historyPanel.setAttribute('aria-hidden', show ? 'false' : 'true');
+  if (show) {
+    elements.historyPanel.setAttribute('tabindex', '-1');
+  }
   if (elements.btnOpenHistory) {
     elements.btnOpenHistory.setAttribute('aria-expanded', show ? 'true' : 'false');
   }
   if (!show) {
+    if (elements.btnOpenHistory && typeof elements.btnOpenHistory.focus === 'function') {
+      elements.btnOpenHistory.focus();
+    }
     return;
   }
   const focusPanel = () => {
@@ -793,7 +979,7 @@ if (elements.btnLogout) {
     clearProfile();
     currentUser = null;
     toggleHistory(false);
-    renderStats([]);
+    resetStats();
     showView('view-login');
     showToast('Sesión cerrada.');
   });
@@ -848,12 +1034,7 @@ if (elements.btnOpenHistory) {
 }
 
 if (elements.btnCloseHistory) {
-  elements.btnCloseHistory.addEventListener('click', () => {
-    toggleHistory(false);
-    if (elements.btnOpenHistory && elements.btnOpenHistory.focus) {
-      elements.btnOpenHistory.focus();
-    }
-  });
+  elements.btnCloseHistory.addEventListener('click', () => toggleHistory(false));
 }
 
 if (elements.btnResultDashboard) {

@@ -88,8 +88,11 @@
         <article class="quick-card"><div class="quick-icon">🧰</div><div><h4>Recursos</h4><p>Tips y herramientas útiles seleccionadas por especialistas.</p></div></article>
         <article class="quick-card quick-card--action">
           <div class="quick-icon">📚</div>
-          <div><h4>Historial de evaluaciones</h4><p>Consulta tus resultados previos y notas personales.</p></div>
-          <button class="btn btn--light" id="btnOpenHistory" type="button">Ver historial</button>
+          <div>
+            <h4>Historial de evaluaciones</h4>
+            <p>Consulta tus resultados previos y notas personales.</p>
+          </div>
+          <button class="btn btn--light" id="btnOpenHistory" type="button" aria-controls="historyPanel" aria-expanded="false">Ver historial</button>
         </article>
       </section>
 
@@ -100,13 +103,53 @@
         </div>
         <div id="statsEmpty" class="stats-empty">Aún no hay suficientes evaluaciones para mostrar estadísticas.</div>
         <div class="insights-grid">
-          <article class="stats-card"><h4>Total de evaluaciones</h4><p id="statsTotalEvaluations" class="stats-value">0</p></article>
-          <article class="stats-card"><h4>Promedio GAD-7</h4><p id="statsAverageGad7" class="stats-value">–</p></article>
-          <article class="stats-card"><h4>Promedio PHQ-9</h4><p id="statsAveragePhq9" class="stats-value">–</p></article>
+          <article class="stats-card">
+            <h4>Total de evaluaciones</h4>
+            <p id="statsTotalEvaluations" class="stats-value">0</p>
+            <span class="stats-label">Se cuentan todas las evaluaciones guardadas.</span>
+          </article>
+          <article class="stats-card">
+            <h4>Promedio GAD-7</h4>
+            <p id="statsAverageGad7" class="stats-value">–</p>
+            <span class="stats-label">Suma de puntajes ÷ número de pruebas GAD-7.</span>
+          </article>
+          <article class="stats-card">
+            <h4>Promedio PHQ-9</h4>
+            <p id="statsAveragePhq9" class="stats-value">–</p>
+            <span class="stats-label">Suma de puntajes ÷ número de pruebas PHQ-9.</span>
+          </article>
+        </div>
+        <div class="latest-grid">
+          <article class="latest-card">
+            <h4>Último resultado GAD-7</h4>
+            <p id="statsLastGad7" class="latest-value">Aún no has completado un GAD-7.</p>
+          </article>
+          <article class="latest-card">
+            <h4>Último resultado PHQ-9</h4>
+            <p id="statsLastPhq9" class="latest-value">Aún no has completado un PHQ-9.</p>
+          </article>
+        </div>
+        <div class="charts-grid">
+          <article class="chart-card">
+            <header>
+              <h4>Evolución de puntajes</h4>
+              <span>Últimas evaluaciones</span>
+            </header>
+            <canvas id="statsTrend" aria-label="Gráfico de línea con la evolución de puntajes" role="img"></canvas>
+            <p class="chart-empty" data-chart-empty="trend">Completa algunas evaluaciones para ver la evolución de tus resultados.</p>
+          </article>
+          <article class="chart-card">
+            <header>
+              <h4>Distribución por categoría</h4>
+              <span>Conteo de evaluaciones por nivel</span>
+            </header>
+            <canvas id="statsSeverity" aria-label="Gráfico de barras con la distribución por categoría" role="img"></canvas>
+            <p class="chart-empty" data-chart-empty="severity">Cuando tengas evaluaciones guardadas verás aquí la distribución por niveles.</p>
+          </article>
         </div>
       </section>
 
-      <section id="historyPanel" class="history hidden">
+      <section id="historyPanel" class="history hidden" aria-hidden="true" tabindex="-1">
         <div class="history-header">
           <h3>Tu historial reciente</h3>
           <button class="link" id="btnCloseHistory" type="button">Ocultar</button>
